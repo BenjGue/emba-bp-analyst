@@ -6,7 +6,7 @@
 .DESCRIPTION
     Ce script définit JIRA_EMAIL et JIRA_API_TOKEN en tant que variables d'environnement
     persistantes au niveau de l'utilisateur Windows (HKCU). Ces variables sont lues par
-    VS Code au démarrage pour alimenter le serveur MCP Atlassian (@atlassian/mcp-server-jira).
+    VS Code au démarrage pour alimenter le serveur MCP Atlassian (atlassian-mcp@latest).
 
     Prérequis : générer un token API sur https://id.atlassian.com/manage-api-tokens
 
