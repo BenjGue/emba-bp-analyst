@@ -44,7 +44,7 @@ Score final **0–100**, agrégé sur **6 dimensions pondérées** :
 | Impact social / environnemental | 10 % |
 | Faisabilité technique | 10 % |
 
-> Formule : **normalisation** de chaque critère sur [0,1] → **pondération** → somme → mise à l'échelle sur 100. Détail et exemple chiffré dans [`livrable.md`](./livrable.md).
+> Formule : **normalisation** de chaque critère sur [0,1] → **pondération** → somme → mise à l'échelle sur 100. Détail et exemple chiffré dans [`livrable.md`](./docs/livrable.md).
 
 ## 3. Stack technique
 
@@ -57,7 +57,7 @@ Score final **0–100**, agrégé sur **6 dimensions pondérées** :
 | **Format d'échange** | **JSON structuré** (entrée/sortie) | Intégration backend, validation systématique |
 | **Hébergement** | **Microsoft Azure** (services managés) | Scalabilité, sécurité, services IA natifs |
 
-L'architecture détaillée (agents spécialisés, services Azure, justification des choix) est dans [`architecture.md`](./architecture.md).
+L'architecture détaillée (agents spécialisés, services Azure, justification des choix) est dans [`architecture.md`](./docs/architecture.md).
 
 ## 4. Architecture en bref
 
@@ -83,11 +83,11 @@ Ce README est le point d'entrée. Il pointe vers cinq documents spécialisés :
 
 | Document | Contenu |
 |---|---|
-| 📐 [`architecture.md`](./architecture.md) | Architecture **agentic**, déploiement **Azure**, services managés, **Azure AI Foundry**, justification des arbitrages |
-| 🛠️ [`craftsmanship.md`](./craftsmanship.md) | Ingénierie logicielle & automatisation : **JIRA**, **VSCode + serveur MCP JIRA**, **GitHub**, **GitHub Actions**, sécurité du code, **GitHub Advanced Security**, pipeline streamliné |
-| 🤖 [`AI-rules.md`](./AI-rules.md) | Setup & fichiers pour **forcer les bonnes pratiques IA** : commentaires, tests unitaires, documentation, branching par feature |
-| 📦 [`livrable.md`](./livrable.md) | **Tous les livrables attendus**, mappés aux critères d'évaluation |
-| ⚙️ [`How-to-setup.md`](./How-to-setup.md) | **Installation** de tout l'environnement : comptes (GitHub, JIRA, Anthropic, Azure), VSCode, Python, MySQL, MCP |
+| 📐 [`architecture.md`](./docs/architecture.md) | Architecture **agentic**, déploiement **Azure**, services managés, **Azure AI Foundry**, justification des arbitrages |
+| 🛠️ [`craftsmanship.md`](./docs/craftsmanship.md) | Ingénierie logicielle & automatisation : **JIRA**, **VSCode + serveur MCP JIRA**, **GitHub**, **GitHub Actions**, sécurité du code, **GitHub Advanced Security**, pipeline streamliné |
+| 🤖 [`AI-rules.md`](./docs/AI-rules.md) | Setup & fichiers pour **forcer les bonnes pratiques IA** : commentaires, tests unitaires, documentation, branching par feature |
+| 📦 [`livrable.md`](./docs/livrable.md) | **Tous les livrables attendus**, mappés aux critères d'évaluation |
+| ⚙️ [`How-to-setup.md`](./docs/How-to-setup.md) | **Installation** de tout l'environnement : comptes (GitHub, JIRA, Anthropic, Azure), VSCode, Python, MySQL, MCP |
 
 ## 6. Organisation du binôme
 
@@ -96,7 +96,7 @@ Ce README est le point d'entrée. Il pointe vers cinq documents spécialisés :
 | **Lead** | Backend / IA / Architecture Azure | Frontend / Score de pertinence / Base MySQL |
 | **Backup** | Revue des PR frontend | Revue des PR backend |
 
-> Règle d'or : **tout passe par une Pull Request relue par l'autre** (cf. [`craftsmanship.md`](./craftsmanship.md)). Aucun merge direct sur `main`.
+> Règle d'or : **tout passe par une Pull Request relue par l'autre** (cf. [`craftsmanship.md`](./docs/craftsmanship.md)). Aucun merge direct sur `main`.
 
 ## 7. Périmètre
 
@@ -126,7 +126,7 @@ uvicorn app.main:app --reload
 open frontend/index.html    # ou : streamlit run frontend/app.py
 ```
 
-Procédure complète d'installation : [`How-to-setup.md`](./How-to-setup.md).
+Procédure complète d'installation : [`How-to-setup.md`](./docs/How-to-setup.md).
 
 ---
 

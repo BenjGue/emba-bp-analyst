@@ -2,7 +2,7 @@
 
 > Comment nous fabriquons le logiciel : gestion de projet, environnement de dev, contrôle de version, intégration continue, sécurité du code. Objectif : une **pipeline de développement streamlinée et optimisée** pour un binôme.
 
-← Retour au [README](./README.md)
+← Retour au [README](../README.md)
 
 ---
 

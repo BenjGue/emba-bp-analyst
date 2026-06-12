@@ -2,7 +2,7 @@
 
 > Setup et fichiers à créer pour **contraindre et optimiser** l'IA (Claude dans VSCode) afin qu'elle produise, **pour chaque feature**, du code respectant nos standards : commentaires utiles, tests unitaires, documentation, et branching GitHub correct.
 
-← Retour au [README](./README.md)
+← Retour au [README](../README.md)
 
 ---
 

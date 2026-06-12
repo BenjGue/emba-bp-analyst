@@ -37,6 +37,8 @@
 | 2026-06-12 | Remplacement placeholders `<org>/bizplan-ia` → `BenjGue/emba-bp-analyst` dans README et How-to-setup | ✅ Terminé |
 | 2026-06-12 | Premier commit + push sur `github.com/BenjGue/emba-bp-analyst` (7 fichiers, commit `82c2e27`) | ✅ Terminé |
 | 2026-06-12 | Implémentation craftsmanship : `.gitignore`, `.env.example`, `pyproject.toml`, `requirements*.txt`, `.vscode/` (settings, extensions, mcp), `.github/copilot-instructions.md`, `.github/pull_request_template.md`, `.pre-commit-config.yaml`, `Dockerfile`, `.github/workflows/` (ci, deploy, codeql) | ✅ Terminé |
+| 2026-06-12 | Réorganisation : déplacement des .md dans `docs/`, mise à jour des liens internes | ✅ Terminé |
+| 2026-06-12 | Création `infra/provision.sh` : provisionnement complet Azure en 1 script (RG, ACR, MySQL, Key Vault, Container Apps, OIDC) | ✅ Terminé |
 
 ---
 
@@ -44,14 +46,12 @@
 
 ### Tâches
 
-- [ ] Valider le schéma d'architecture final (cf. `architecture.md`)
-- [ ] Provisionner le Resource Group Azure (`rg-bizplan`)
-- [ ] Créer l'Azure Container Registry (`bizplanacr`)
-- [ ] Créer l'Azure Container Apps environment
-- [ ] Créer la base MySQL (Azure Database for MySQL Flexible Server)
-- [ ] Configurer les variables d'environnement dans Container Apps
-- [ ] Mettre en place le Key Vault pour les secrets (ANTHROPIC_API_KEY, etc.)
-- [ ] Configurer les federated credentials OIDC (GitHub → Azure)
+- [ ] Valider le schéma d'architecture final (cf. `docs/architecture.md`)
+- [x] Créer le script de provisionnement Azure (`infra/provision.sh`)
+- [ ] **Exécuter** `bash infra/provision.sh dev` (par Benjamin)
+- [ ] Ajouter les secrets GitHub Actions (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
+- [ ] Récupérer la `DATABASE_URL` depuis Key Vault et la partager avec Mauricette
+- [ ] Configurer les variables d'environnement dans Container Apps (via Key Vault reference)
 - [ ] Valider la connectivité Container Apps ↔ MySQL
 
 ### Journal

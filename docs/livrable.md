@@ -2,7 +2,7 @@
 
 > Tous les livrables attendus pour le Projet 2, chacun relié aux **critères d'évaluation** du cas. Sert de checklist de soutenance.
 
-← Retour au [README](./README.md)
+← Retour au [README](../README.md)
 
 ---
 

@@ -4,7 +4,7 @@
 
 > **Pas de test en local** — la base de données tourne sur l'environnement Azure `dev`. On pousse directement via la pipeline CI/CD.
 
-← Retour au [README](./README.md)
+← Retour au [README](../README.md)
 
 ---
 
@@ -281,4 +281,4 @@ Si tous les points sont cochés, l'environnement est prêt. Reprendre le flux de
 
 ---
 
-← [livrable.md](./livrable.md) · Retour au [README](./README.md)
+← [livrable.md](./livrable.md) · Retour au [README](../README.md)

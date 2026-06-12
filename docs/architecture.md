@@ -3,7 +3,7 @@
 > Architecture **agentic** déployée sur **Microsoft Azure**, optimisée pour la génération automatisée de business plans et le scoring de pertinence.
 > Ce document explique **nos choix** et **nos arbitrages** (critère d'évaluation : *« Capacité à expliquer les choix : architecture, arbitrages, limites »*).
 
-← Retour au [README](./README.md)
+← Retour au [README](../README.md)
 
 ---
 
@@ -184,4 +184,4 @@ Volumétrie cible du jeu fictif : **5–10 projets**, **30–50 hypothèses fina
 
 ---
 
-← [README](./README.md) · Suite : [`craftsmanship.md`](./craftsmanship.md)
+← [README](../README.md) · Suite : [`craftsmanship.md`](./craftsmanship.md)
