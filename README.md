@@ -129,6 +129,27 @@ open frontend/index.html    # ou : streamlit run frontend/app.py
 
 Procédure complète d'installation : [`How-to-setup.md`](./docs/How-to-setup.md).
 
+## 9. Serveur MCP Jira (GitHub Copilot Agent Mode)
+
+Le serveur MCP Atlassian est configuré dans [`.vscode/mcp.json`](./.vscode/mcp.json) et partagé dans le dépôt. Il permet à GitHub Copilot en mode Agent de lire et créer des tickets Jira directement depuis VS Code.
+
+### Prérequis : token API Atlassian
+
+1. Générez un token sur <https://id.atlassian.com/manage-api-tokens>
+2. Exécutez le script de configuration **(une seule fois par poste)** :
+
+```powershell
+# Dans un terminal PowerShell, à la racine du projet
+.\scripts\setup-jira-mcp.ps1
+```
+
+Le script enregistre `JIRA_EMAIL` et `JIRA_API_TOKEN` en variables d'environnement **persistantes** (niveau utilisateur Windows). Ces variables ne sont jamais commitées.
+
+3. **Redémarrez VS Code** pour que les variables soient chargées.
+4. Lancez le serveur : `Ctrl+Shift+P` → **MCP: Start Server** → **jira**.
+
+> ⚠️ Ne jamais mettre de token en dur dans le code ni dans `.vscode/mcp.json`.
+
 ---
 
 *BizPlan-IA — Executive MBA EPITECH P2026 — Benjamin Guérin & Mauricette.*
