@@ -30,7 +30,9 @@ Temps estimé : **30–45 min**.
 1. Aller sur **https://github.com** → *Sign up*.
 2. Choisir un identifiant pro, vérifier l'email.
 3. (Recommandé) Activer la **2FA** (Settings → Password and authentication).
-4. Le dépôt partagé est **`emba-bp-analyst`** sur GitHub : `https://github.com/BenjGue/emba-bp-analyst` — inviter Mauricette (Settings → Collaborators).
+4. Le dépôt **`emba-bp-analyst`** est **privé** : `https://github.com/BenjGue/emba-bp-analyst`.
+   - **Benjamin** : aller dans *Settings → Collaborators → Add people* et saisir l'identifiant GitHub de Mauricette pour lui donner accès.
+   - **Mauricette** : communiquer ton identifiant GitHub à Benjamin, puis accepter l'invitation reçue par email.
 5. Activer **GitHub Advanced Security** sur le dépôt (Settings → Code security) : *CodeQL*, *Secret scanning + push protection*, *Dependabot*.
 
 > Étudiants : **GitHub Student Developer Pack** (https://education.github.com) débloque des avantages gratuits.
