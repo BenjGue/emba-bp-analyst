@@ -192,34 +192,45 @@ az account show                      # vérifier que rg-bizplan est visible
 
 ## 8. Configurer le serveur MCP vers JIRA
 
-Permet à l'assistant IA (dans VSCode) de lire/écrire les tickets JIRA. Voir aussi [`craftsmanship.md`](./craftsmanship.md) §2.3.
+Permet à GitHub Copilot (mode Agent) de lire/écrire les tickets JIRA sans quitter VS Code.  
+Le fichier `.vscode/mcp.json` est déjà présent dans le dépôt — il pointe sur `ionis-stm-team-ek7kwlup.atlassian.net`.
 
-> **Option A (Claude Code)** : support MCP natif, fonctionne immédiatement.  
-> **Option B (GitHub Copilot)** : activer le mode **Agent** dans Copilot Chat, puis ajouter le serveur MCP.
+### Étape 1 — Générer un token API Atlassian
 
-1. Exporter les variables d'environnement (ne pas les committer) :
-   ```bash
-   # ~/.bashrc, ~/.zshrc ou variables d'env Windows
-   export JIRA_EMAIL="vous@exemple.com"
-   export JIRA_API_TOKEN="<token créé à l'étape 2.5>"
-   ```
-2. Créer `.vscode/mcp.json` :
-   ```json
-   {
-     "servers": {
-       "jira": {
-         "command": "npx",
-         "args": ["-y", "@atlassian/mcp-server-jira"],
-         "env": {
-           "JIRA_URL": "https://<votre-domaine>.atlassian.net",
-           "JIRA_EMAIL": "${env:JIRA_EMAIL}",
-           "JIRA_API_TOKEN": "${env:JIRA_API_TOKEN}"
-         }
-       }
-     }
-   }
-   ```
-3. Recharger VSCode. Tester dans Claude : *« Liste mes tickets JIRA ouverts du projet BIZ. »*
+1. Se connecter sur <https://id.atlassian.com/manage-profile/security/api-tokens>
+2. **Create API token** → nommer `copilot-mcp-bizplan`
+3. Copier le token généré (il ne sera affiché qu'une fois)
+
+### Étape 2 — Déclarer les variables d'environnement Windows (utilisateur)
+
+> ⚠️ Ne jamais mettre le token dans un fichier commité.
+
+Dans un terminal PowerShell **en tant qu'utilisateur** (pas besoin d'admin) :
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("JIRA_EMAIL",     "benjamin.guerin@ionis-stm.com", "User")
+[System.Environment]::SetEnvironmentVariable("JIRA_API_TOKEN", "<token-copié-étape-1>",          "User")
+```
+
+Redémarrer VS Code pour que les variables soient chargées.
+
+> **Mauricette** : remplacer `benjamin.guerin@ionis-stm.com` par ton email Atlassian.
+
+### Étape 3 — Vérifier l'activation dans VS Code
+
+Le dépôt configure déjà dans `.vscode/settings.json` :
+```json
+"chat.mcp.enabled": true,
+"github.copilot.chat.agentMode.enabled": true
+```
+Aucune action supplémentaire nécessaire.
+
+### Étape 4 — Tester
+
+1. Ouvrir Copilot Chat (`Ctrl+Alt+I`)
+2. Basculer en mode **Agent** (icône ⚙️ en haut du panneau)
+3. Vérifier que l'outil **jira** apparaît dans la liste des outils disponibles
+4. Tester : *« Liste mes tickets JIRA ouverts du projet BIZ. »*
 
 ---
 

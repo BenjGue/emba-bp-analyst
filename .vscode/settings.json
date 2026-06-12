@@ -38,6 +38,8 @@
     "markdown": true,
     "yaml": true
   },
+  "chat.mcp.enabled": true,
+  "github.copilot.chat.agentMode.enabled": true,
 
   // ── Git ──────────────────────────────────────────────────────────────────
   "git.autofetch": true,
