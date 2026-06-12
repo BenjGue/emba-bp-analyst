@@ -9,14 +9,19 @@
 
 ### Tâches
 
-- [ ] Créer `.vscode/mcp.json` (serveur MCP JIRA)
-- [ ] Créer `.vscode/extensions.json` (extensions standardisées du binôme)
-- [ ] Créer `.vscode/settings.json` (réglages partagés : Ruff, format on save, exclusions)
-- [ ] Créer `.github/workflows/ci.yml` (lint + types + tests + CodeQL)
-- [ ] Créer `.github/workflows/deploy.yml` (build → ACR → Azure Container Apps via OIDC)
-- [ ] Créer `.github/workflows/codeql.yml` (SAST hebdomadaire)
-- [ ] Créer `.github/pull_request_template.md` (template PR avec checklist)
-- [ ] Créer `Dockerfile` (image API Python)
+- [x] Créer `.vscode/mcp.json` (serveur MCP JIRA)
+- [x] Créer `.vscode/extensions.json` (extensions standardisées du binôme)
+- [x] Créer `.vscode/settings.json` (réglages partagés : Ruff, format on save, exclusions)
+- [x] Créer `.github/workflows/ci.yml` (lint + types + tests + CodeQL)
+- [x] Créer `.github/workflows/deploy.yml` (build → ACR → Azure Container Apps via OIDC)
+- [x] Créer `.github/workflows/codeql.yml` (SAST hebdomadaire)
+- [x] Créer `.github/pull_request_template.md` (template PR avec checklist)
+- [x] Créer `.github/copilot-instructions.md` (instructions GitHub Copilot)
+- [x] Créer `Dockerfile` (image API Python, multi-stage, non-root)
+- [x] Créer `pyproject.toml` (Ruff, mypy, pytest config)
+- [x] Créer `requirements.txt` + `requirements-dev.txt`
+- [x] Créer `.pre-commit-config.yaml` (Ruff, mypy, detect-secrets)
+- [x] Créer `.gitignore` + `.env.example`
 - [ ] Configurer les secrets GitHub (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
 - [ ] Configurer les règles de protection de branche `main` sur GitHub
 - [ ] Valider le choix d'assistant IA (Option A : Claude Code / Option B : GitHub Copilot Education)
@@ -31,6 +36,7 @@
 | 2026-06-12 | Mise à jour `How-to-setup.md` : arbre de décision assistant IA (Claude Code CLI+addon vs Copilot Education + démarche Nadine), Azure géré par Brice, MySQL local supprimé (→ Azure dev) | ✅ Terminé |
 | 2026-06-12 | Remplacement placeholders `<org>/bizplan-ia` → `BenjGue/emba-bp-analyst` dans README et How-to-setup | ✅ Terminé |
 | 2026-06-12 | Premier commit + push sur `github.com/BenjGue/emba-bp-analyst` (7 fichiers, commit `82c2e27`) | ✅ Terminé |
+| 2026-06-12 | Implémentation craftsmanship : `.gitignore`, `.env.example`, `pyproject.toml`, `requirements*.txt`, `.vscode/` (settings, extensions, mcp), `.github/copilot-instructions.md`, `.github/pull_request_template.md`, `.pre-commit-config.yaml`, `Dockerfile`, `.github/workflows/` (ci, deploy, codeql) | ✅ Terminé |
 
 ---
 

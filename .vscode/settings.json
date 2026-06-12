@@ -1,0 +1,45 @@
+{
+  // ── Python ──────────────────────────────────────────────────────────────
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python",
+  "python.terminal.activateEnvironment": true,
+
+  // ── Ruff (lint + format) ────────────────────────────────────────────────
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // ── Éditeur ─────────────────────────────────────────────────────────────
+  "editor.rulers": [100],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // ── Explorateur — exclusions ─────────────────────────────────────────────
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/.venv": true
+  },
+
+  // ── GitHub Copilot ──────────────────────────────────────────────────────
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "yaml": true
+  },
+
+  // ── Git ──────────────────────────────────────────────────────────────────
+  "git.autofetch": true,
+  "git.confirmSync": false
+}

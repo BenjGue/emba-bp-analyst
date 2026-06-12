@@ -1,0 +1,52 @@
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-wheel-metadata/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# ── Secrets & environnement local ──────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── Tests & couverture ─────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── IDE ────────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.idea/
+
+# ── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Docker ─────────────────────────────────────────────────────────────────
+*.log
+
+# ── Azure / infra ──────────────────────────────────────────────────────────
+*.tfstate
+*.tfstate.backup
+.terraform/
