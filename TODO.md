@@ -29,6 +29,8 @@
 | 2026-06-12 | Ajout section choix assistant IA (Claude Code vs Copilot Education) | ✅ Documenté |
 | 2026-06-12 | Mise à jour `How-to-setup.md` : section §3 remplacée par choix Option A/B, §7 et §8 alignés | ✅ Terminé |
 | 2026-06-12 | Mise à jour `How-to-setup.md` : arbre de décision assistant IA (Claude Code CLI+addon vs Copilot Education + démarche Nadine), Azure géré par Brice, MySQL local supprimé (→ Azure dev) | ✅ Terminé |
+| 2026-06-12 | Remplacement placeholders `<org>/bizplan-ia` → `BenjGue/emba-bp-analyst` dans README et How-to-setup | ✅ Terminé |
+| 2026-06-12 | Premier commit + push sur `github.com/BenjGue/emba-bp-analyst` (7 fichiers, commit `82c2e27`) | ✅ Terminé |
 
 ---
 
