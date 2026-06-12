@@ -88,6 +88,7 @@ Ce README est le point d'entrée. Il pointe vers cinq documents spécialisés :
 | 🤖 [`AI-rules.md`](./docs/AI-rules.md) | Setup & fichiers pour **forcer les bonnes pratiques IA** : commentaires, tests unitaires, documentation, branching par feature |
 | 📦 [`livrable.md`](./docs/livrable.md) | **Tous les livrables attendus**, mappés aux critères d'évaluation |
 | ⚙️ [`How-to-setup.md`](./docs/How-to-setup.md) | **Installation** de tout l'environnement : comptes (GitHub, JIRA, Anthropic, Azure), VSCode, Python, MySQL, MCP |
+| 📋 [`backlog.md`](./docs/backlog.md) | **6 Epics · 21 User Stories · 94 points** — critères d'acceptation complets, ordre de développement par sprint |
 
 ## 6. Organisation du binôme
 

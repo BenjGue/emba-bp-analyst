@@ -1,6 +1,6 @@
 # TODO — Suivi des tâches & journal d'actions
 
-> **Convention de statut** : `[ ]` À faire · `[~]` En cours · `[x]` Terminé · `[!]` Bloqué  
+> **Convention de statut** : `[ ]` À faire · `[~]` En cours · `[x]` Terminé · `[!]` Bloqué
 > **Journal** : chaque action terminée est horodatée en bas de section pour permettre une reprise sur erreur.
 
 ---
@@ -64,44 +64,62 @@
 
 ## 3. Business & User Stories
 
-### Epics
+> Backlog détaillé (Epics + US + critères d'acceptation) dans [`docs/backlog.md`](./docs/backlog.md).
 
-#### Epic 1 — Score de pertinence
-- [ ] BIZ-xx : Définir les critères de scoring (pondération)
-- [ ] BIZ-xx : Implémenter le calcul du score normalisé (min-max)
-- [ ] BIZ-xx : Tests unitaires score (bornes 0 et 100)
-- [ ] BIZ-xx : Exposer l'endpoint `/score` via l'API
+### Statut global
 
-#### Epic 2 — Génération du Business Plan
-- [ ] BIZ-xx : Définir la structure du BP (sections, format)
-- [ ] BIZ-xx : Implémenter l'agent de génération (LLM + contexte)
-- [ ] BIZ-xx : Générer le document final (PDF / Markdown)
-- [ ] BIZ-xx : Tests d'intégration génération BP
+| Epic | Stories | Points | Statut |
+|---|---|---|---|
+| Epic 1 — Saisie formulaire | 4 | 15 | ⬜ À démarrer |
+| Epic 2 — Score de pertinence | 3 | 11 | ⬜ À démarrer |
+| Epic 3 — Génération BP (agents IA) | 5 | 34 | ⬜ À démarrer |
+| Epic 4 — Consultation & export | 3 | 13 | ⬜ À démarrer |
+| Epic 5 — Infrastructure & données | 3 | 13 | ⬜ À démarrer |
+| Epic 6 — Qualité & sécurité | 3 | 8 | ✅ En place (CI/CD, secrets) |
 
-#### Epic 3 — Base de données MySQL
-- [ ] BIZ-xx : Définir le schéma de données (tables, relations)
-- [ ] BIZ-xx : Écrire les migrations (Alembic ou SQL brut)
-- [ ] BIZ-xx : Valider les requêtes d'accès via l'ORM
-- [ ] BIZ-xx : Seeddata de test
+### Sprint 0 — Socle technique (priorité immédiate)
 
-#### Epic 4 — Frontend
-- [ ] BIZ-xx : Définir les maquettes / wireframes
-- [ ] BIZ-xx : Scaffolding du projet frontend
-- [ ] BIZ-xx : Connecter le frontend à l'API
-- [ ] BIZ-xx : Tests E2E (Playwright ou Cypress)
+- [ ] US-5.3 : Scaffolding FastAPI (`app/`, `GET /health`, config pydantic-settings)
+- [ ] US-5.1 : Schéma MySQL + migrations (`db/schema.sql`)
+- [ ] US-6.1 : Valider pipeline CI opérationnelle (lint + tests + build)
+- [ ] US-6.2 : Valider pipeline déploiement Azure (OIDC → Container Apps)
+- [ ] US-6.3 : Secrets — valider detect-secrets + push protection GitHub
 
-#### Epic 5 — Agents IA
-- [ ] BIZ-xx : Définir l'architecture multi-agents
-- [ ] BIZ-xx : Implémenter l'agent financier
-- [ ] BIZ-xx : Implémenter l'agent marché
-- [ ] BIZ-xx : Orchestration et chaînage des agents
-- [ ] BIZ-xx : Évaluation qualité des outputs agents
+### Sprint 1 — Core métier
+
+- [ ] US-1.1 : Formulaire — informations générales projet
+- [ ] US-1.2 : Formulaire — hypothèses financières
+- [ ] US-1.3 : Formulaire — dimensions stratégiques (6 curseurs)
+- [ ] US-2.1 : Calcul score de pertinence (déterministe, 6 dimensions pondérées)
+- [ ] US-2.2 : Endpoint `POST /projects/{id}/score`
+
+### Sprint 2 — Agents IA
+
+- [ ] US-3.1 : Orchestrateur Azure AI Foundry
+- [ ] US-3.3 : Agent Financier (3 scénarios)
+- [ ] US-3.2 : Agent Analyste (marché + contexte)
+- [ ] US-3.4 : Agent Rédacteur (BP 10 sections)
+- [ ] US-3.5 : Agent Synthèse (note CODIR)
+
+### Sprint 3 — UX & consultation
+
+- [ ] US-1.4 : Écran récapitulatif avant soumission
+- [ ] US-2.3 : Affichage score + graphique radar
+- [ ] US-4.1 : Consultation BP dans l'interface
+- [ ] US-4.2 : Export BP (PDF + Markdown) + note CODIR
+- [ ] US-4.3 : Tableau de bord comparatif multi-projets
+
+### Sprint 4 — Données & soutenance
+
+- [ ] US-5.2 : Jeu de données fictives La Poste (5–10 projets seed)
+- [ ] Préparer démo live pour soutenance
 
 ### Journal
 
 | Date | Action | Résultat |
 |---|---|---|
 | 2026-06-12 | Initialisation des Epics dans TODO | ✅ Draft |
+| 2026-06-12 | Création `docs/backlog.md` : 6 Epics, 21 US, 94 points, critères d'acceptation complets | ✅ Terminé |
 
 ---
 
