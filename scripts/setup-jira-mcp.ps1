@@ -8,7 +8,7 @@
     persistantes au niveau de l'utilisateur Windows (HKCU). Ces variables sont lues par
     VS Code au démarrage pour alimenter le serveur MCP Atlassian (atlassian-mcp@latest).
 
-    Prérequis : générer un token API sur https://id.atlassian.com/manage-api-tokens
+    Prérequis : générer un token API sur https://id.atlassian.com/manage-profile/security/api-tokens
 
 .EXAMPLE
     .\scripts\setup-jira-mcp.ps1
@@ -42,7 +42,7 @@ if (-not $jiraEmail) {
 
 # ── Récupération du token ────────────────────────────────────────────────────
 Write-Host ""
-Write-Host "Générez votre token sur : https://id.atlassian.com/manage-api-tokens" -ForegroundColor Yellow
+Write-Host "Générez votre token sur : https://id.atlassian.com/manage-profile/security/api-tokens" -ForegroundColor Yellow
 $existingToken = [System.Environment]::GetEnvironmentVariable("JIRA_API_TOKEN", "User")
 if ($existingToken -and $existingToken -ne "<token_atlassian>" -and $existingToken -ne "<ton-token-atlassian>") {
     Write-Host "JIRA_API_TOKEN : déjà défini (valeur masquée)"
@@ -63,7 +63,7 @@ if ($existingToken -and $existingToken -ne "<token_atlassian>" -and $existingTok
 }
 
 if (-not $jiraToken -or $jiraToken -eq "<token_atlassian>" -or $jiraToken -eq "<ton-token-atlassian>") {
-    Write-Error "Token invalide ou vide. Veuillez générer un vrai token sur https://id.atlassian.com/manage-api-tokens"
+    Write-Error "Token invalide ou vide. Veuillez générer un vrai token sur https://id.atlassian.com/manage-profile/security/api-tokens"
     exit 1
 }
 

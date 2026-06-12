@@ -135,7 +135,7 @@ Le serveur MCP Atlassian est configuré dans [`.vscode/mcp.json`](./.vscode/mcp.
 
 ### Prérequis : token API Atlassian
 
-1. Générez un token sur <https://id.atlassian.com/manage-api-tokens>
+1. Générez un token sur <https://id.atlassian.com/manage-profile/security/api-tokens>
 2. Exécutez le script de configuration **(une seule fois par poste)** :
 
 ```powershell
