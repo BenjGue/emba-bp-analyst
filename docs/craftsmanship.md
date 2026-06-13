@@ -52,11 +52,11 @@ Configuration MCP (extrait, voir [`How-to-setup.md`](./How-to-setup.md) pour l'i
   "servers": {
     "jira": {
       "command": "npx",
-      "args": ["-y", "@atlassian/mcp-server-jira"],
+      "args": ["-y", "atlassian-mcp@latest"],
       "env": {
-        "JIRA_URL": "https://<votre-domaine>.atlassian.net",
-        "JIRA_EMAIL": "${env:JIRA_EMAIL}",
-        "JIRA_API_TOKEN": "${env:JIRA_API_TOKEN}"
+        "ATLASSIAN_BASE_URL": "https://ionis-stm-team-ek7kwlup.atlassian.net",
+        "ATLASSIAN_USERNAME": "${env:JIRA_EMAIL}",
+        "ATLASSIAN_API_TOKEN": "${env:JIRA_API_TOKEN}"
       }
     }
   }

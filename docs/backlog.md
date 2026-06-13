@@ -1,8 +1,8 @@
 # Backlog — Epics & User Stories BizPlan-IA
 
-> Document de référence avant import dans JIRA (projet `BIZ`).
+> Document de référence synchronisé avec JIRA (projet [`BIZ`](https://ionis-stm-team-ek7kwlup.atlassian.net/jira/software/projects/BIZ/boards)).
 > Format : **Epic → Story → Critères d'acceptation**.
-> Les numéros `BIZ-xx` seront assignés à l'import JIRA.
+> Import JIRA effectué le 2026-06-13 — numéros `BIZ-xx` assignés.
 
 ← Retour au [README](../README.md)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## EPIC 1 — Saisie du projet (formulaire)
+## [BIZ-1] EPIC 1 — Saisie du projet (formulaire)
 
 > Le porteur de projet saisit les informations de son projet via un formulaire web structuré.
 
@@ -26,7 +26,7 @@
 
 ---
 
-### US-1.1 — Saisir les informations générales du projet
+### [BIZ-7] US-1.1 — Saisir les informations générales du projet
 **En tant que** porteur de projet,  
 **Je veux** renseigner le nom, la description, la direction concernée et l'horizon temporel du projet,  
 **Afin de** créer un dossier de projet dans le système.
@@ -40,7 +40,7 @@
 
 ---
 
-### US-1.2 — Saisir les hypothèses financières
+### [BIZ-8] US-1.2 — Saisir les hypothèses financières
 **En tant que** porteur de projet,  
 **Je veux** renseigner les hypothèses financières clés (investissement, revenus, coûts),  
 **Afin que** l'IA puisse calculer les scénarios financiers.
@@ -54,7 +54,7 @@
 
 ---
 
-### US-1.3 — Saisir les dimensions stratégiques
+### [BIZ-9] US-1.3 — Saisir les dimensions stratégiques
 **En tant que** porteur de projet,  
 **Je veux** évaluer mon projet sur 6 dimensions stratégiques via des curseurs ou échelles,  
 **Afin que** le score de pertinence soit calculé.
@@ -68,7 +68,7 @@
 
 ---
 
-### US-1.4 — Visualiser et modifier le projet avant soumission
+### [BIZ-10] US-1.4 — Visualiser et modifier le projet avant soumission
 **En tant que** porteur de projet,  
 **Je veux** revoir toutes mes saisies sur un écran récapitulatif avant de lancer la génération,  
 **Afin de** corriger les erreurs avant de consommer des crédits IA.
@@ -82,7 +82,7 @@
 
 ---
 
-## EPIC 2 — Score de pertinence
+## [BIZ-2] EPIC 2 — Score de pertinence
 
 > Calcul déterministe et auditable du score de pertinence (0–100) à partir des données saisies.
 
@@ -90,7 +90,7 @@
 
 ---
 
-### US-2.1 — Calculer le score de pertinence
+### [BIZ-11] US-2.1 — Calculer le score de pertinence
 **En tant que** système backend,  
 **Je veux** calculer un score normalisé sur 6 dimensions pondérées,  
 **Afin de** fournir une note objective et comparable entre projets.
@@ -106,7 +106,7 @@
 
 ---
 
-### US-2.2 — Exposer le score via l'API
+### [BIZ-12] US-2.2 — Exposer le score via l'API
 **En tant que** frontend,  
 **Je veux** appeler `POST /projects/{id}/score` et recevoir le score détaillé,  
 **Afin d'** afficher le résultat et le détail par dimension.
@@ -121,7 +121,7 @@
 
 ---
 
-### US-2.3 — Afficher le score et le détail par dimension
+### [BIZ-13] US-2.3 — Afficher le score et le détail par dimension
 **En tant que** porteur de projet,  
 **Je veux** voir mon score global et la contribution de chaque dimension,  
 **Afin de** comprendre les leviers d'amélioration.
@@ -135,7 +135,7 @@
 
 ---
 
-## EPIC 3 — Génération du Business Plan (agents IA)
+## [BIZ-3] EPIC 3 — Génération du Business Plan (agents IA)
 
 > Architecture multi-agents Claude pour générer un BP complet en 10 sections, 3 scénarios financiers et une note CODIR.
 
@@ -143,7 +143,7 @@
 
 ---
 
-### US-3.1 — Orchestrer la génération multi-agents
+### [BIZ-14] US-3.1 — Orchestrer la génération multi-agents
 **En tant que** système backend,  
 **Je veux** déclencher une séquence d'agents spécialisés pour produire le BP,  
 **Afin de** garantir la qualité et la cohérence de chaque section.
@@ -158,7 +158,7 @@
 
 ---
 
-### US-3.2 — Générer l'analyse de marché et du contexte
+### [BIZ-15] US-3.2 — Générer l'analyse de marché et du contexte
 **En tant que** agent Analyste,  
 **Je veux** produire une analyse du contexte projet (marché, enjeux, positionnement),  
 **Afin que** les sections stratégiques du BP soient fondées.
@@ -172,7 +172,7 @@
 
 ---
 
-### US-3.3 — Générer les 3 scénarios financiers
+### [BIZ-16] US-3.3 — Générer les 3 scénarios financiers
 **En tant que** agent Financier,  
 **Je veux** produire 3 scénarios (pessimiste, réaliste, optimiste) à partir des hypothèses saisies,  
 **Afin que** le CODIR dispose d'une projection financière.
@@ -187,7 +187,7 @@
 
 ---
 
-### US-3.4 — Générer le Business Plan en 10 sections
+### [BIZ-17] US-3.4 — Générer le Business Plan en 10 sections
 **En tant que** agent Rédacteur,  
 **Je veux** produire un BP structuré en 10 sections à partir de toutes les données,  
 **Afin de** fournir un document complet et professionnel.
@@ -202,7 +202,7 @@
 
 ---
 
-### US-3.5 — Générer la note de synthèse CODIR
+### [BIZ-18] US-3.5 — Générer la note de synthèse CODIR
 **En tant que** agent Synthèse,  
 **Je veux** produire une note d'une page résumant le projet pour le CODIR,  
 **Afin que** les décideurs disposent d'un résumé décisionnel.
@@ -216,7 +216,7 @@
 
 ---
 
-## EPIC 4 — Consultation et export
+## [BIZ-4] EPIC 4 — Consultation et export
 
 > Le porteur de projet et le CODIR consultent les résultats et exportent les documents.
 
@@ -224,7 +224,7 @@
 
 ---
 
-### US-4.1 — Consulter le Business Plan généré
+### [BIZ-19] US-4.1 — Consulter le Business Plan généré
 **En tant que** porteur de projet,  
 **Je veux** lire le BP généré dans l'interface web,  
 **Afin de** vérifier le contenu avant export.
@@ -238,7 +238,7 @@
 
 ---
 
-### US-4.2 — Exporter le BP et la note CODIR
+### [BIZ-20] US-4.2 — Exporter le BP et la note CODIR
 **En tant que** porteur de projet,  
 **Je veux** télécharger le BP et la note CODIR,  
 **Afin de** les partager hors de l'outil.
@@ -253,7 +253,7 @@
 
 ---
 
-### US-4.3 — Tableau de bord comparatif multi-projets
+### [BIZ-21] US-4.3 — Tableau de bord comparatif multi-projets
 **En tant que** manager CODIR,  
 **Je veux** voir tous les projets avec leur score sur une seule vue,  
 **Afin de** prioriser les projets soumis.
@@ -268,7 +268,7 @@
 
 ---
 
-## EPIC 5 — Infrastructure & données de test
+## [BIZ-5] EPIC 5 — Infrastructure & données de test
 
 > Socle technique : base de données, migrations, données fictives, scaffolding applicatif.
 
@@ -276,7 +276,7 @@
 
 ---
 
-### US-5.1 — Définir et créer le schéma de base de données
+### [BIZ-22] US-5.1 — Définir et créer le schéma de base de données
 **En tant que** développeur,  
 **Je veux** un schéma MySQL normalisé pour stocker projets, hypothèses, scores et BP,  
 **Afin que** toutes les données soient persistées et requêtables.
@@ -291,7 +291,7 @@
 
 ---
 
-### US-5.2 — Créer le jeu de données fictives (seed)
+### [BIZ-23] US-5.2 — Créer le jeu de données fictives (seed)
 **En tant que** développeur,  
 **Je veux** un jeu de 5–10 projets fictifs représentatifs La Poste,  
 **Afin de** démontrer l'outil en soutenance avec des données réalistes.
@@ -305,7 +305,7 @@
 
 ---
 
-### US-5.3 — Scaffolding de l'application FastAPI
+### [BIZ-24] US-5.3 — Scaffolding de l'application FastAPI
 **En tant que** développeur,  
 **Je veux** la structure de base de l'application Python/FastAPI avec les modules principaux,  
 **Afin que** les US fonctionnelles puissent être développées de façon cohérente.
@@ -321,7 +321,7 @@
 
 ---
 
-## EPIC 6 — Qualité & sécurité (transverse)
+## [BIZ-6] EPIC 6 — Qualité & sécurité (transverse)
 
 > Stories techniques transverses garantissant la qualité tout au long du projet.
 
@@ -329,7 +329,7 @@
 
 ---
 
-### US-6.1 — Pipeline CI opérationnelle
+### [BIZ-25] US-6.1 — Pipeline CI opérationnelle
 **En tant que** développeur,  
 **Je veux** que chaque PR déclenche automatiquement lint, types, tests et build Docker,  
 **Afin de** détecter les régressions immédiatement.
@@ -343,7 +343,7 @@
 
 ---
 
-### US-6.2 — Pipeline de déploiement automatique
+### [BIZ-26] US-6.2 — Pipeline de déploiement automatique
 **En tant que** développeur,  
 **Je veux** qu'un merge sur `main` déploie automatiquement l'API sur Azure Container Apps,  
 **Afin d'** avoir un environnement `dev` toujours à jour.
@@ -358,7 +358,7 @@
 
 ---
 
-### US-6.3 — Aucun secret en clair dans le code
+### [BIZ-27] US-6.3 — Aucun secret en clair dans le code
 **En tant que** développeur,  
 **Je veux** que les secrets soient détectés et bloqués avant tout push,  
 **Afin d'** éviter toute fuite d'informations sensibles.
