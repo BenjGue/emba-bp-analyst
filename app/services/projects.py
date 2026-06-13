@@ -1,7 +1,7 @@
-"""Service de scoring rattaché à un projet (US-2.2).
+"""Services liés aux projets (US-1.1, US-2.2).
 
-Vérifie l'existence du projet, calcule le score (logique pure réutilisée de
-``app.services.scoring``) puis persiste le résultat horodaté.
+Création d'un projet (informations générales) et scoring rattaché à un projet
+existant (calcul via ``app.services.scoring`` puis persistance horodatée).
 """
 
 from __future__ import annotations
@@ -9,12 +9,35 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.models import Project, Score
+from app.schemas.project import ProjectCreate
 from app.schemas.score import ScoreResponse, StrategicDimensions
 from app.services.scoring import compute_score
 
 
 class ProjectNotFoundError(Exception):
     """Levée lorsqu'aucun projet ne correspond à l'identifiant fourni."""
+
+
+def create_project(db: Session, data: ProjectCreate) -> Project:
+    """Crée et persiste un projet à partir de ses informations générales.
+
+    Args:
+        db: Session de base de données.
+        data: Informations générales validées du projet.
+
+    Returns:
+        Le projet persisté, avec son identifiant généré.
+    """
+    project = Project(
+        nom=data.nom,
+        description=data.description,
+        direction=data.direction.value,
+        duree_estimee_mois=data.duree_estimee_mois,
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+    return project
 
 
 def score_project(

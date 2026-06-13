@@ -55,7 +55,12 @@ def project_id(client: TestClient) -> int:
         L'identifiant du projet persisté.
     """
     with Session(get_engine()) as session:
-        project = Project(name="Projet Test")
+        project = Project(
+            nom="Projet Test",
+            description="Projet de test pour les scénarios automatisés.",
+            direction="Numérique",
+            duree_estimee_mois=12,
+        )
         session.add(project)
         session.commit()
         session.refresh(project)
