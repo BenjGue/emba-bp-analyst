@@ -36,22 +36,22 @@ jobs:
       - name: Build & push vers Azure Container Registry
         run: |
           az acr build \
-            --registry bizplanacr \
+            --registry acrbizplandev \
             --image bizplan-api:${{ github.sha }} \
             .
 
       - name: Déployer sur Azure Container Apps
         run: |
           az containerapp update \
-            --name bizplan-api \
-            --resource-group rg-bizplan \
-            --image bizplanacr.azurecr.io/bizplan-api:${{ github.sha }}
+            --name bizplan-api-dev \
+            --resource-group rg-bizplan-dev \
+            --image acrbizplandev.azurecr.io/bizplan-api:${{ github.sha }}
 
       - name: Vérifier la santé de l'app
         run: |
           sleep 30
           az containerapp show \
-            --name bizplan-api \
-            --resource-group rg-bizplan \
+            --name bizplan-api-dev \
+            --resource-group rg-bizplan-dev \
             --query "properties.runningStatus" \
             --output tsv

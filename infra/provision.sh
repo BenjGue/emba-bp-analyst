@@ -57,24 +57,32 @@ echo "   ✅ ${RG} créé dans ${LOCATION}"
 # ── 2. Azure Container Registry ──────────────────────────────────────────────
 echo ""
 echo "▶ 2/7 — Azure Container Registry"
-az acr create \
-    --resource-group "${RG}" \
-    --name "${ACR}" \
-    --sku Basic \
-    --admin-enabled false \
-    --output none
+if az acr show --name "${ACR}" --resource-group "${RG}" &>/dev/null; then
+    echo "   ℹ️  ${ACR} existe déjà"
+else
+    az acr create \
+        --resource-group "${RG}" \
+        --name "${ACR}" \
+        --sku Basic \
+        --admin-enabled false \
+        --output none
+fi
 echo "   ✅ ${ACR}.azurecr.io"
 
 # ── 3. Key Vault ─────────────────────────────────────────────────────────────
 echo ""
 echo "▶ 3/7 — Key Vault"
-az keyvault create \
-    --resource-group "${RG}" \
-    --name "${KEYVAULT}" \
-    --location "${LOCATION}" \
-    --enable-rbac-authorization true \
-    --retention-days 7 \
-    --output none
+if az keyvault show --name "${KEYVAULT}" &>/dev/null; then
+    echo "   ℹ️  ${KEYVAULT} existe déjà"
+else
+    az keyvault create \
+        --resource-group "${RG}" \
+        --name "${KEYVAULT}" \
+        --location "${LOCATION}" \
+        --enable-rbac-authorization true \
+        --retention-days 7 \
+        --output none
+fi
 echo "   ✅ ${KEYVAULT}"
 
 # ── 4. MySQL Flexible Server ──────────────────────────────────────────────────
@@ -84,19 +92,29 @@ echo "▶ 4/7 — MySQL Flexible Server"
 # Générer un mot de passe aléatoire et le stocker dans Key Vault
 MYSQL_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | head -c 32)
 
-az mysql flexible-server create \
-    --resource-group "${RG}" \
-    --name "${MYSQL_SERVER}" \
-    --location "${LOCATION}" \
-    --admin-user "${MYSQL_ADMIN}" \
-    --admin-password "${MYSQL_PASSWORD}" \
-    --sku-name "Standard_B1ms" \
-    --tier "Burstable" \
-    --storage-size 20 \
-    --version 8.0.21 \
-    --high-availability Disabled \
-    --backup-retention 7 \
-    --output none
+if az mysql flexible-server show --resource-group "${RG}" --name "${MYSQL_SERVER}" &>/dev/null; then
+    echo "   ℹ️  ${MYSQL_SERVER} existe déjà — réinitialisation du mot de passe admin"
+    az mysql flexible-server update \
+        --resource-group "${RG}" \
+        --name "${MYSQL_SERVER}" \
+        --admin-password "${MYSQL_PASSWORD}" \
+        --output none
+else
+    az mysql flexible-server create \
+        --resource-group "${RG}" \
+        --name "${MYSQL_SERVER}" \
+        --location "${LOCATION}" \
+        --admin-user "${MYSQL_ADMIN}" \
+        --admin-password "${MYSQL_PASSWORD}" \
+        --sku-name "Standard_B1ms" \
+        --tier "Burstable" \
+        --storage-size 20 \
+        --version 8.0.21 \
+        --high-availability Disabled \
+        --backup-retention 7 \
+        --yes \
+        --output none
+fi
 
 # Base de données
 az mysql flexible-server db create \
@@ -130,28 +148,36 @@ echo "   ✅ DATABASE-URL stocké dans Key Vault"
 # ── 5. Container Apps Environment ────────────────────────────────────────────
 echo ""
 echo "▶ 5/7 — Container Apps Environment"
-az containerapp env create \
-    --resource-group "${RG}" \
-    --name "${ACA_ENV}" \
-    --location "${LOCATION}" \
-    --output none
+if az containerapp env show --resource-group "${RG}" --name "${ACA_ENV}" &>/dev/null; then
+    echo "   ℹ️  ${ACA_ENV} existe déjà"
+else
+    az containerapp env create \
+        --resource-group "${RG}" \
+        --name "${ACA_ENV}" \
+        --location "${LOCATION}" \
+        --output none
+fi
 echo "   ✅ ${ACA_ENV}"
 
 # ── 6. Container App (déploiement initial vide) ───────────────────────────────
 echo ""
 echo "▶ 6/7 — Container App"
-az containerapp create \
-    --resource-group "${RG}" \
-    --name "${ACA_APP}" \
-    --environment "${ACA_ENV}" \
-    --image "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" \
-    --target-port 8000 \
-    --ingress external \
-    --min-replicas 0 \
-    --max-replicas 3 \
-    --cpu 0.5 \
-    --memory 1.0Gi \
-    --output none
+if az containerapp show --resource-group "${RG}" --name "${ACA_APP}" &>/dev/null; then
+    echo "   ℹ️  ${ACA_APP} existe déjà"
+else
+    az containerapp create \
+        --resource-group "${RG}" \
+        --name "${ACA_APP}" \
+        --environment "${ACA_ENV}" \
+        --image "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" \
+        --target-port 8000 \
+        --ingress external \
+        --min-replicas 0 \
+        --max-replicas 3 \
+        --cpu 0.5 \
+        --memory 1.0Gi \
+        --output none
+fi
 echo "   ✅ ${ACA_APP} (image placeholder — sera remplacée par CI/CD)"
 
 # ── 7. OIDC — Federated credentials pour GitHub Actions ──────────────────────
@@ -160,40 +186,48 @@ echo "▶ 7/7 — OIDC / Federated credentials GitHub Actions"
 
 # Récupérer l'Object ID du service principal courant ou en créer un
 APP_NAME="sp-${PROJECT}-github-${ENV}"
-APP_ID=$(az ad app create --display-name "${APP_NAME}" --query appId -o tsv 2>/dev/null || true)
+APP_ID=$(az ad app list --display-name "${APP_NAME}" --query "[0].appId" -o tsv 2>/dev/null || true)
+if [ -z "${APP_ID}" ]; then
+    APP_ID=$(az ad app create --display-name "${APP_NAME}" --query appId -o tsv 2>/dev/null || true)
+fi
 
 if [ -z "${APP_ID}" ]; then
     echo "   ⚠️  Impossible de créer l'app registration automatiquement (droits insuffisants)."
     echo "   → Créer manuellement dans Azure AD et ajouter les secrets GitHub :"
     echo "      AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID"
 else
-    SP_OBJECT_ID=$(az ad sp create --id "${APP_ID}" --query id -o tsv)
+    SP_OBJECT_ID=$(az ad sp show --id "${APP_ID}" --query id -o tsv 2>/dev/null || true)
+    if [ -z "${SP_OBJECT_ID}" ]; then
+        SP_OBJECT_ID=$(az ad sp create --id "${APP_ID}" --query id -o tsv)
+    fi
 
-    # Federated credential pour la branche main
-    az ad app federated-credential create \
-        --id "${APP_ID}" \
-        --parameters "{
-            \"name\": \"github-main\",
-            \"issuer\": \"https://token.actions.githubusercontent.com\",
-            \"subject\": \"repo:BenjGue/emba-bp-analyst:ref:refs/heads/main\",
-            \"audiences\": [\"api://AzureADTokenExchange\"]
-        }" \
-        --output none
+    # Federated credential pour la branche main (idempotent)
+    if ! az ad app federated-credential list --id "${APP_ID}" --query "[?name=='github-main']" -o tsv | grep -q .; then
+        az ad app federated-credential create \
+            --id "${APP_ID}" \
+            --parameters "{
+                \"name\": \"github-main\",
+                \"issuer\": \"https://token.actions.githubusercontent.com\",
+                \"subject\": \"repo:BenjGue/emba-bp-analyst:ref:refs/heads/main\",
+                \"audiences\": [\"api://AzureADTokenExchange\"]
+            }" \
+            --output none
+    fi
 
-    # Rôle Contributor sur le Resource Group
+    # Rôle Contributor sur le Resource Group (idempotent)
     az role assignment create \
         --assignee "${SP_OBJECT_ID}" \
         --role "Contributor" \
         --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG}" \
-        --output none
+        --output none 2>/dev/null || true
 
-    # Rôle AcrPush sur l'ACR
+    # Rôle AcrPush sur l'ACR (idempotent)
     ACR_ID=$(az acr show --name "${ACR}" --resource-group "${RG}" --query id -o tsv)
     az role assignment create \
         --assignee "${SP_OBJECT_ID}" \
         --role "AcrPush" \
         --scope "${ACR_ID}" \
-        --output none
+        --output none 2>/dev/null || true
 
     echo "   ✅ App registration : ${APP_NAME} (${APP_ID})"
     echo ""
