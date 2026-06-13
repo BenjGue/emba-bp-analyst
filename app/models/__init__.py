@@ -6,6 +6,22 @@ connaisse au moment de la création des tables.
 
 from __future__ import annotations
 
-from app.models.project import Project, Score
+from app.models.project import (
+    BusinessPlan,
+    FinancialAssumption,
+    Project,
+    Scenario,
+    Score,
+    StrategicAssessment,
+)
+
+__all__ = [
+    "BusinessPlan",
+    "FinancialAssumption",
+    "Project",
+    "Scenario",
+    "Score",
+    "StrategicAssessment",
+]
 
 __all__ = ["Project", "Score"]

@@ -8,13 +8,18 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app import __version__
 from app.config import get_settings
 from app.db import init_db
 from app.routers import health, projects, score
+
+_STATIC_DIR = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
@@ -50,6 +55,18 @@ def create_app() -> FastAPI:
     application.include_router(health.router)
     application.include_router(score.router)
     application.include_router(projects.router)
+
+    application.mount(
+        "/static",
+        StaticFiles(directory=_STATIC_DIR),
+        name="static",
+    )
+
+    @application.get("/", include_in_schema=False)
+    def index() -> FileResponse:
+        """Sert l'interface web (single-page application)."""
+        return FileResponse(_STATIC_DIR / "index.html")
+
     return application
 
 
