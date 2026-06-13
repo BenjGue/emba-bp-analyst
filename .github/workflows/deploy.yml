@@ -21,11 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download SSL cert Azure MySQL
-        run: |
-          curl -sL https://dl.cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem \
-            -o DigiCertGlobalRootG2.crt.pem
-
       - name: Azure login (OIDC — sans secret)
         uses: azure/login@v2
         with:
