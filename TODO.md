@@ -94,8 +94,8 @@
 - [ ] US-1.1 : Formulaire — informations générales projet
 - [ ] US-1.2 : Formulaire — hypothèses financières
 - [ ] US-1.3 : Formulaire — dimensions stratégiques (6 curseurs)
-- [ ] US-2.1 : Calcul score de pertinence (déterministe, 6 dimensions pondérées)
-- [ ] US-2.2 : Endpoint `POST /projects/{id}/score`
+- [x] US-2.1 : Calcul score de pertinence (déterministe, 6 dimensions pondérées)
+- [x] US-2.2 : Endpoint `POST /projects/{id}/score`
 
 ### Sprint 2 — Agents IA
 

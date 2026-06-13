@@ -19,6 +19,7 @@ class Settings(BaseSettings):
         app_name: Nom lisible de l'application, exposé par l'API.
         environment: Environnement d'exécution (``dev``, ``staging``, ``prod``).
         debug: Active le mode debug (logs verbeux, rechargement).
+        database_url: Chaîne de connexion SQLAlchemy à la base de données.
     """
 
     model_config = SettingsConfigDict(
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     app_name: str = "BizPlan-IA"
     environment: str = "dev"
     debug: bool = False
+    database_url: str = "sqlite:///./bizplan.db"
 
 
 @lru_cache
