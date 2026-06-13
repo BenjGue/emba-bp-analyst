@@ -54,7 +54,8 @@ def test_delete_project_existant_retourne_204(client: TestClient) -> None:
     project_id = _create(client)
     response = client.delete(f"/projects/{project_id}")
     assert response.status_code == 204
-    assert client.get(f"/projects/{project_id}").status_code == 404
+    follow_up = client.get(f"/projects/{project_id}")
+    assert follow_up.status_code == 404
 
 
 def test_delete_project_inexistant_retourne_404(client: TestClient) -> None:
@@ -86,11 +87,17 @@ def test_delete_project_supprime_donnees_rattachees(client: TestClient) -> None:
     )
     client.post(f"/projects/{project_id}/generate")
 
-    assert client.delete(f"/projects/{project_id}").status_code == 204
-    assert client.get(f"/projects/{project_id}/financials").status_code == 404
-    assert client.get(f"/projects/{project_id}/score").status_code == 404
-    assert client.get(f"/projects/{project_id}/bp").status_code == 404
-    assert client.get("/projects").json() == []
+    deletion = client.delete(f"/projects/{project_id}")
+    assert deletion.status_code == 204
+
+    financials = client.get(f"/projects/{project_id}/financials")
+    score = client.get(f"/projects/{project_id}/score")
+    business_plan = client.get(f"/projects/{project_id}/bp")
+    listing = client.get("/projects")
+    assert financials.status_code == 404
+    assert score.status_code == 404
+    assert business_plan.status_code == 404
+    assert listing.json() == []
 
 
 def test_list_projects_vide_retourne_liste_vide(client: TestClient) -> None:
