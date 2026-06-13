@@ -22,6 +22,7 @@ ENV/
 .env.local
 .env.*.local
 *.pem
+!DigiCertGlobalRootG2.crt.pem
 *.key
 
 # ── Tests & couverture ─────────────────────────────────────────────────────
