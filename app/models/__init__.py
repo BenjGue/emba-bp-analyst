@@ -1,7 +1,11 @@
 """Modèles de données (SQLAlchemy ORM).
 
-Ce package accueillera les modèles de persistance (projets, hypothèses, scores,
-business plans). Vide au scaffolding initial (US-5.3) ; peuplé par US-5.1.
+Regroupe et expose les entités persistées afin que ``Base.metadata`` les
+connaisse au moment de la création des tables.
 """
 
 from __future__ import annotations
+
+from app.models.project import Project, Score
+
+__all__ = ["Project", "Score"]
