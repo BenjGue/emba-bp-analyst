@@ -35,6 +35,7 @@ from app.services.generation import generate_business_plan
 from app.services.projects import (
     ProjectNotFoundError,
     create_project,
+    delete_project,
     get_project,
     list_project_summaries,
     save_dimensions,
@@ -146,6 +147,34 @@ def edit_project(
         return ProjectResponse.model_validate(update_project(db, project_id, data))
     except ProjectNotFoundError as exc:
         raise _NOT_FOUND from exc
+
+
+@router.delete(
+    "/{project_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Supprimer un projet",
+)
+def remove_project(
+    project_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    """Supprime un projet et ses données rattachées (BIZ-35).
+
+    Args:
+        project_id: Identifiant du projet à supprimer.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Une réponse 204 sans contenu.
+
+    Raises:
+        HTTPException: 404 si le projet n'existe pas.
+    """
+    try:
+        delete_project(db, project_id)
+    except ProjectNotFoundError as exc:
+        raise _NOT_FOUND from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put(

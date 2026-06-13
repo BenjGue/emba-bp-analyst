@@ -86,6 +86,24 @@ def update_project(db: Session, project_id: int, data: ProjectUpdate) -> Project
     return project
 
 
+def delete_project(db: Session, project_id: int) -> None:
+    """Supprime un projet et ses données rattachées (US-4.3 / BIZ-35).
+
+    La suppression est propagée en cascade aux hypothèses financières, à
+    l'évaluation stratégique, aux scores, au business plan et aux scénarios.
+
+    Args:
+        db: Session de base de données.
+        project_id: Identifiant du projet à supprimer.
+
+    Raises:
+        ProjectNotFoundError: Si le projet n'existe pas.
+    """
+    project = get_project(db, project_id)
+    db.delete(project)
+    db.commit()
+
+
 def list_project_summaries(db: Session, direction: str | None = None) -> list[ProjectSummary]:
     """Liste les projets avec leur dernier score (US-4.3).
 

@@ -189,6 +189,32 @@ label.field {
   border-color: var(--bleu);
 }
 
+.req {
+  color: var(--rouge);
+  font-weight: 700;
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: var(--gris-txt);
+  margin: 0.25rem 0 1rem;
+}
+
+.field input.invalid,
+.field select.invalid,
+.field textarea.invalid {
+  border-color: var(--rouge);
+  outline-color: var(--rouge);
+}
+
+.field-error {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--rouge);
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -269,6 +295,29 @@ label.field {
 .project-row .meta {
   font-size: 0.82rem;
   color: var(--gris-txt);
+}
+
+.btn-delete {
+  border: 1px solid var(--gris-bord);
+  background: #fff;
+  color: var(--rouge);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: var(--rouge);
+  border-color: var(--rouge);
+  color: #fff;
+}
+
+.btn-delete:focus-visible {
+  outline: 2px solid var(--rouge);
+  outline-offset: 2px;
 }
 
 .score-badge {
