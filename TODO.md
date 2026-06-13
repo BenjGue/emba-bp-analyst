@@ -22,8 +22,8 @@
 - [x] Créer `requirements.txt` + `requirements-dev.txt`
 - [x] Créer `.pre-commit-config.yaml` (Ruff, mypy, detect-secrets)
 - [x] Créer `.gitignore` + `.env.example`
-- [ ] Configurer les secrets GitHub (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
-- [ ] Configurer les règles de protection de branche `main` sur GitHub
+- [x] Configurer les secrets GitHub (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
+- [x] Configurer les règles de protection de branche `main` sur GitHub
 - [ ] Valider le choix d'assistant IA (Option A : Claude Code / Option B : GitHub Copilot Education)
 
 ### Journal
@@ -39,6 +39,10 @@
 | 2026-06-12 | Implémentation craftsmanship : `.gitignore`, `.env.example`, `pyproject.toml`, `requirements*.txt`, `.vscode/` (settings, extensions, mcp), `.github/copilot-instructions.md`, `.github/pull_request_template.md`, `.pre-commit-config.yaml`, `Dockerfile`, `.github/workflows/` (ci, deploy, codeql) | ✅ Terminé |
 | 2026-06-12 | Réorganisation : déplacement des .md dans `docs/`, mise à jour des liens internes | ✅ Terminé |
 | 2026-06-12 | Création `infra/provision.sh` : provisionnement complet Azure en 1 script (RG, ACR, MySQL, Key Vault, Container Apps, OIDC) | ✅ Terminé |
+| 2026-06-13 | Provisionnement Azure exécuté (RG, ACR, Key Vault, MySQL, Container Apps Env + App) + secrets GitHub + 2 federated credentials OIDC (`ref:refs/heads/main` et `environment:dev`) | ✅ Terminé |
+| 2026-06-13 | Fix `deploy.yml` : suppression de l'étape `curl` (cert DigiCert déjà versionné, exit 60) — commit `f67e3f5` | ✅ Terminé |
+| 2026-06-13 | Fix pull ACR : identité managée system-assigned du Container App + rôle AcrPull + `containerapp registry set --identity system` | ✅ Terminé |
+| 2026-06-13 | **Déploiement Azure opérationnel** : `/health` répond `{status: ok}` sur https://bizplan-api-dev.salmondune-1b29666f.westeurope.azurecontainerapps.io | ✅ Terminé |
 
 ---
 
@@ -48,8 +52,8 @@
 
 - [ ] Valider le schéma d'architecture final (cf. `docs/architecture.md`)
 - [x] Créer le script de provisionnement Azure (`infra/provision.sh`)
-- [ ] **Exécuter** `bash infra/provision.sh dev` (par Benjamin)
-- [ ] Ajouter les secrets GitHub Actions (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
+- [x] **Exécuter** `bash infra/provision.sh dev` (par Benjamin)
+- [x] Ajouter les secrets GitHub Actions (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
 - [ ] Récupérer la `DATABASE_URL` depuis Key Vault et la partager avec Mauricette
 - [ ] Configurer les variables d'environnement dans Container Apps (via Key Vault reference)
 - [ ] Valider la connectivité Container Apps ↔ MySQL
@@ -79,10 +83,10 @@
 
 ### Sprint 0 — Socle technique (priorité immédiate)
 
-- [ ] US-5.3 : Scaffolding FastAPI (`app/`, `GET /health`, config pydantic-settings)
+- [x] US-5.3 : Scaffolding FastAPI (`app/`, `GET /health`, config pydantic-settings)
 - [ ] US-5.1 : Schéma MySQL + migrations (`db/schema.sql`)
-- [ ] US-6.1 : Valider pipeline CI opérationnelle (lint + tests + build)
-- [ ] US-6.2 : Valider pipeline déploiement Azure (OIDC → Container Apps)
+- [x] US-6.1 : Valider pipeline CI opérationnelle (lint + tests + build)
+- [x] US-6.2 : Valider pipeline déploiement Azure (OIDC → Container Apps)
 - [ ] US-6.3 : Secrets — valider detect-secrets + push protection GitHub
 
 ### Sprint 1 — Core métier
@@ -146,5 +150,5 @@
 | # | Description | Dépendance | Statut |
 |---|---|---|---|
 | 1 | Choix définitif de l'assistant IA (Claude Code vs Copilot) | Accès licences binôme | En attente |
-| 2 | Numéros de tickets JIRA (BIZ-xx) non encore assignés | Création du projet JIRA | En attente |
-| 3 | Secrets Azure non provisionnés | Accès souscription Azure | En attente |
+| 2 | Numéros de tickets JIRA (BIZ-xx) non encore assignés | Création du projet JIRA | ✅ Levé (import effectué) |
+| 3 | Secrets Azure non provisionnés | Accès souscription Azure | ✅ Levé (provisionné le 2026-06-13) |

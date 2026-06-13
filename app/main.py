@@ -10,7 +10,7 @@ from fastapi import FastAPI
 
 from app import __version__
 from app.config import get_settings
-from app.routers import health
+from app.routers import health, score
 
 
 def create_app() -> FastAPI:
@@ -29,6 +29,7 @@ def create_app() -> FastAPI:
         ),
     )
     application.include_router(health.router)
+    application.include_router(score.router)
     return application
 
 
