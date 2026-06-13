@@ -1,7 +1,8 @@
-"""Modèles ORM des projets et de leurs scores de pertinence.
+"""Modèles ORM des projets, hypothèses, scores et business plans.
 
-Le modèle ``Project`` porte les informations générales saisies par le porteur
-de projet (US-1.1) ; le modèle ``Score`` persiste les scores calculés (US-2.2).
+Schéma relationnel normalisé (US-5.1) : un ``Project`` agrège ses hypothèses
+financières (US-1.2), son évaluation stratégique (US-1.3), ses scores (US-2.x),
+son business plan généré (US-3.x / US-4.1) et ses scénarios financiers.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -31,6 +32,10 @@ class Project(Base):
         duree_estimee_mois: Horizon temporel estimé, en mois.
         created_at: Date de création (UTC).
         scores: Scores de pertinence calculés pour ce projet.
+        financial_assumption: Hypothèses financières saisies (0 ou 1).
+        strategic_assessment: Évaluation stratégique saisie (0 ou 1).
+        business_plan: Business plan généré (0 ou 1).
+        scenarios: Scénarios financiers générés.
     """
 
     __tablename__ = "projects"
@@ -43,6 +48,26 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     scores: Mapped[list[Score]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="Score.created_at",
+    )
+    financial_assumption: Mapped[FinancialAssumption | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    strategic_assessment: Mapped[StrategicAssessment | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    business_plan: Mapped[BusinessPlan | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    scenarios: Mapped[list[Scenario]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
     )
@@ -69,3 +94,109 @@ class Score(Base):
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     project: Mapped[Project] = relationship(back_populates="scores")
+
+
+class FinancialAssumption(Base):
+    """Hypothèses financières clés d'un projet (US-1.2).
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché (unique).
+        investissement_initial: Investissement initial, en euros.
+        revenus_annuels: Revenus annuels attendus, en euros.
+        couts_annuels: Coûts annuels d'exploitation, en euros.
+        delai_rentabilite_mois: Délai estimé avant rentabilité, en mois.
+        created_at: Horodatage de saisie (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "financial_assumptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    investissement_initial: Mapped[float]
+    revenus_annuels: Mapped[float]
+    couts_annuels: Mapped[float]
+    delai_rentabilite_mois: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="financial_assumption")
+
+
+class StrategicAssessment(Base):
+    """Évaluation stratégique d'un projet sur 6 dimensions (US-1.3).
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché (unique).
+        rentabilite: Note de rentabilité (0-10).
+        alignement: Note d'alignement stratégique (0-10).
+        risque: Note de maîtrise du risque (0-10).
+        impact_operationnel: Note d'impact opérationnel (0-10).
+        impact_social: Note d'impact social/environnemental (0-10).
+        faisabilite: Note de faisabilité technique (0-10).
+        created_at: Horodatage de saisie (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "strategic_assessments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    rentabilite: Mapped[int]
+    alignement: Mapped[int]
+    risque: Mapped[int]
+    impact_operationnel: Mapped[int]
+    impact_social: Mapped[int]
+    faisabilite: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="strategic_assessment")
+
+
+class BusinessPlan(Base):
+    """Business plan généré pour un projet (US-3.x / US-4.1).
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché (unique).
+        status: Statut de génération (``generated``).
+        sections: Sections du BP sérialisées en JSON (titre -> contenu).
+        synthese_codir: Note de synthèse pour le comité de direction.
+        created_at: Horodatage de génération (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "business_plans"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    status: Mapped[str] = mapped_column(String(20), default="generated")
+    sections: Mapped[dict[str, Any]] = mapped_column(JSON)
+    synthese_codir: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="business_plan")
+
+
+class Scenario(Base):
+    """Scénario financier généré (bas / médian / haut).
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché.
+        type: Type de scénario (``bas``, ``median``, ``haut``).
+        data: Données chiffrées du scénario, sérialisées en JSON.
+        created_at: Horodatage de génération (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "scenarios"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    type: Mapped[str] = mapped_column(String(20))
+    data: Mapped[dict[str, Any]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="scenarios")

@@ -65,3 +65,43 @@ class ProjectResponse(BaseModel):
     direction: Direction = Field(description="Direction concernée.")
     duree_estimee_mois: int = Field(description="Durée estimée en mois.")
     created_at: datetime = Field(description="Date de création (UTC).")
+
+
+class ProjectUpdate(BaseModel):
+    """Champs modifiables d'un projet avant soumission (US-1.4).
+
+    Tous les champs sont optionnels : seuls ceux fournis sont mis à jour.
+
+    Attributes:
+        nom: Nouveau nom du projet.
+        description: Nouvelle description.
+        direction: Nouvelle direction concernée.
+        duree_estimee_mois: Nouvelle durée estimée, en mois.
+    """
+
+    nom: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, min_length=1, max_length=1000)
+    direction: Direction | None = Field(default=None)
+    duree_estimee_mois: int | None = Field(default=None, gt=0, le=600)
+
+
+class ProjectSummary(BaseModel):
+    """Résumé d'un projet pour le tableau de bord comparatif (US-4.3).
+
+    Attributes:
+        id: Identifiant technique du projet.
+        nom: Nom du projet.
+        direction: Direction concernée.
+        score_total: Dernier score global (0-100) ou ``None`` si non calculé.
+        has_business_plan: Indique si un business plan a été généré.
+        created_at: Date de création (UTC).
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nom: str
+    direction: Direction
+    score_total: float | None = Field(default=None, description="Dernier score global (0-100).")
+    has_business_plan: bool = Field(default=False, description="Un business plan a été généré.")
+    created_at: datetime
