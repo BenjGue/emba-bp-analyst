@@ -138,12 +138,25 @@ async function renderDashboard(direction = "") {
       const row = el(`
         <div class="project-row" data-project="${p.id}">
           ${badge}
-          <div>
+          <div class="row-main">
             <h3>${escapeHtml(p.nom)}</h3>
             <div class="meta"><span class="tag">${escapeHtml(p.direction)}</span> ${bpTag}</div>
           </div>
-          <div class="muted">›</div>
+          <button class="btn-delete" type="button" title="Supprimer le projet"
+                  aria-label="Supprimer le projet ${escapeHtml(p.nom)}">🗑</button>
         </div>`);
+      const delBtn = row.querySelector(".btn-delete");
+      delBtn.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        if (!confirm(`Supprimer définitivement le projet « ${p.nom} » ?`)) return;
+        try {
+          await api("DELETE", `/${p.id}`);
+          toast("Projet supprimé");
+          renderDashboard(direction);
+        } catch (e) {
+          toast(e.message, true);
+        }
+      });
       row.addEventListener("click", () => renderDetail(p.id));
       list.appendChild(row);
     }
@@ -185,30 +198,54 @@ function renderWizard() {
 
   function stepProject() {
     shell(`
-      <label class="field">Nom du projet
-        <input id="f-nom" maxlength="200" placeholder="Ex. Casiers connectés en bureau de poste" />
+      <label class="field">Nom du projet <span class="req" aria-hidden="true">*</span>
+        <input id="f-nom" maxlength="200" required aria-required="true"
+               placeholder="Ex. Casiers connectés en bureau de poste" />
+        <small class="field-error" id="err-nom" hidden></small>
       </label>
-      <label class="field">Description
-        <textarea id="f-desc" maxlength="1000" placeholder="Décrivez l'objectif et le périmètre du projet"></textarea>
+      <label class="field">Description <span class="req" aria-hidden="true">*</span>
+        <textarea id="f-desc" maxlength="1000" required aria-required="true"
+                  placeholder="Décrivez l'objectif et le périmètre du projet"></textarea>
+        <small class="field-error" id="err-desc" hidden></small>
       </label>
       <div class="grid-2">
-        <label class="field">Direction concernée
+        <label class="field">Direction concernée <span class="req" aria-hidden="true">*</span>
           <select id="f-dir">${DIRECTIONS.map((d) => `<option>${d}</option>`).join("")}</select>
         </label>
-        <label class="field">Durée estimée (mois)
-          <input id="f-duree" type="number" min="1" max="120" value="12" />
+        <label class="field">Durée estimée (mois) <span class="req" aria-hidden="true">*</span>
+          <input id="f-duree" type="number" min="1" max="120" value="12" required aria-required="true" />
+          <small class="field-error" id="err-duree" hidden></small>
         </label>
       </div>
+      <p class="form-hint"><span class="req" aria-hidden="true">*</span> Champs obligatoires</p>
       <div class="btn-row">
         <button class="btn btn-primary" id="next">Continuer ›</button>
       </div>`);
 
     document.getElementById("next").onclick = async () => {
+      const nom = val("f-nom");
+      const description = val("f-desc");
+      const dureeRaw = val("f-duree");
+      const duree = Number(dureeRaw);
+
+      const errors = {};
+      if (!nom) errors["nom"] = "Le nom du projet est obligatoire.";
+      else if (nom.length > 200) errors["nom"] = "Le nom ne doit pas dépasser 200 caractères.";
+      if (!description) errors["desc"] = "La description est obligatoire.";
+      else if (description.length > 1000)
+        errors["desc"] = "La description ne doit pas dépasser 1000 caractères.";
+      if (!dureeRaw || !Number.isFinite(duree) || !Number.isInteger(duree))
+        errors["duree"] = "Indiquez une durée en mois (nombre entier).";
+      else if (duree < 1 || duree > 120)
+        errors["duree"] = "La durée doit être comprise entre 1 et 120 mois.";
+
+      if (!applyFieldErrors(["nom", "desc", "duree"], errors)) return;
+
       const payload = {
-        nom: val("f-nom"),
-        description: val("f-desc"),
+        nom: nom,
+        description: description,
         direction: val("f-dir"),
-        duree_estimee_mois: Number(val("f-duree")),
+        duree_estimee_mois: duree,
       };
       try {
         state.project = await api("POST", "", payload);
@@ -334,6 +371,42 @@ function renderWizard() {
 
 function val(id) {
   return document.getElementById(id).value.trim();
+}
+
+// Affiche les messages d'erreur par champ et place le focus sur le premier
+// champ invalide. Retourne true si aucune erreur (formulaire valide).
+function applyFieldErrors(fields, errors) {
+  let firstInvalid = null;
+  for (const f of fields) {
+    const input = document.getElementById(`f-${f}`);
+    const errEl = document.getElementById(`err-${f}`);
+    const message = errors[f];
+    if (message) {
+      if (errEl) {
+        errEl.textContent = message;
+        errEl.hidden = false;
+      }
+      if (input) {
+        input.setAttribute("aria-invalid", "true");
+        input.classList.add("invalid");
+      }
+      if (!firstInvalid) firstInvalid = input;
+    } else {
+      if (errEl) {
+        errEl.textContent = "";
+        errEl.hidden = true;
+      }
+      if (input) {
+        input.removeAttribute("aria-invalid");
+        input.classList.remove("invalid");
+      }
+    }
+  }
+  if (firstInvalid) {
+    firstInvalid.focus();
+    return false;
+  }
+  return true;
 }
 
 // -------- Vue : fiche projet --------

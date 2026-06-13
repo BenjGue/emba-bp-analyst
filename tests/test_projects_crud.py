@@ -50,6 +50,49 @@ def test_update_project_inexistant_retourne_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+def test_delete_project_existant_retourne_204(client: TestClient) -> None:
+    project_id = _create(client)
+    response = client.delete(f"/projects/{project_id}")
+    assert response.status_code == 204
+    assert client.get(f"/projects/{project_id}").status_code == 404
+
+
+def test_delete_project_inexistant_retourne_404(client: TestClient) -> None:
+    response = client.delete("/projects/99999")
+    assert response.status_code == 404
+
+
+def test_delete_project_supprime_donnees_rattachees(client: TestClient) -> None:
+    project_id = _create(client)
+    client.put(
+        f"/projects/{project_id}/financials",
+        json={
+            "investissement_initial": 100000,
+            "revenus_annuels": 80000,
+            "couts_annuels": 30000,
+            "delai_rentabilite_mois": 24,
+        },
+    )
+    client.put(
+        f"/projects/{project_id}/dimensions",
+        json={
+            "rentabilite": 8,
+            "alignement": 7,
+            "risque": 6,
+            "impact_operationnel": 7,
+            "impact_social": 8,
+            "faisabilite": 7,
+        },
+    )
+    client.post(f"/projects/{project_id}/generate")
+
+    assert client.delete(f"/projects/{project_id}").status_code == 204
+    assert client.get(f"/projects/{project_id}/financials").status_code == 404
+    assert client.get(f"/projects/{project_id}/score").status_code == 404
+    assert client.get(f"/projects/{project_id}/bp").status_code == 404
+    assert client.get("/projects").json() == []
+
+
 def test_list_projects_vide_retourne_liste_vide(client: TestClient) -> None:
     response = client.get("/projects")
     assert response.status_code == 200
