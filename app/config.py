@@ -20,6 +20,17 @@ class Settings(BaseSettings):
         environment: Environnement d'exécution (``dev``, ``staging``, ``prod``).
         debug: Active le mode debug (logs verbeux, rechargement).
         database_url: Chaîne de connexion SQLAlchemy à la base de données.
+        ai_enabled: Active les appels réels au modèle IA (EPIC 3). Désactivé par
+            défaut afin que les tests et la CI restent hors-ligne et
+            déterministes ; la génération retombe alors sur le mode template.
+        ai_endpoint: Endpoint Azure AI Foundry (ex. ``https://xxx.cognitiveservices.azure.com``).
+        ai_deployment: Nom du déploiement de modèle à interroger (agnostique :
+            Claude Sonnet, GPT, etc.). Le contrat ``chat/completions`` est commun.
+        ai_api_version: Version d'API de l'inférence Azure.
+        ai_api_key: Clé d'API du service Foundry. **Jamais en dur** : lue depuis
+            l'environnement (dev) ou Key Vault (prod). Vide par défaut.
+        ai_timeout_s: Délai maximal (secondes) d'un appel au modèle.
+        ai_max_tokens: Plafond de jetons générés par appel.
     """
 
     model_config = SettingsConfigDict(
@@ -32,6 +43,15 @@ class Settings(BaseSettings):
     environment: str = "dev"
     debug: bool = False
     database_url: str = "sqlite:///./bizplan.db"
+
+    # --- Intégration IA (EPIC 3) ---------------------------------------------
+    ai_enabled: bool = False
+    ai_endpoint: str = ""
+    ai_deployment: str = ""
+    ai_api_version: str = "2024-10-21"
+    ai_api_key: str = ""
+    ai_timeout_s: float = 60.0
+    ai_max_tokens: int = 2000
 
 
 @lru_cache

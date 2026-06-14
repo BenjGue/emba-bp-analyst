@@ -11,7 +11,7 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite://"  # base en mémoire, avant tout import app
 
-from collections.abc import Iterator  # noqa: E402
+from collections.abc import Callable, Iterator  # noqa: E402
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -21,6 +21,51 @@ from app.config import get_settings  # noqa: E402
 from app.db import Base, get_engine  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Project  # noqa: E402
+from app.services.ai import AiCompletion  # noqa: E402
+
+
+class FakeAiClient:
+    """Faux client IA pour les tests : aucun appel réseau.
+
+    La réponse est produite par une fonction injectée qui inspecte les prompts,
+    ce qui permet de simuler chaque agent (analyste, financier, ...) selon le
+    contenu du prompt système. Tous les appels sont enregistrés pour assertion.
+
+    Attributes:
+        responder: Fonction ``(system, user) -> texte`` simulant le modèle.
+        calls: Historique des appels reçus.
+    """
+
+    def __init__(self, responder: Callable[[str, str], str]) -> None:
+        """Initialise le faux client.
+
+        Args:
+            responder: Fonction simulant la réponse du modèle.
+        """
+        self.responder = responder
+        self.calls: list[dict[str, object]] = []
+
+    def complete(
+        self,
+        *,
+        system: str,
+        user: str,
+        json_mode: bool = False,
+        max_tokens: int | None = None,
+    ) -> AiCompletion:
+        """Simule un appel au modèle et restitue une réponse cannée.
+
+        Args:
+            system: Instruction système.
+            user: Message utilisateur.
+            json_mode: Indicateur de réponse JSON (enregistré, non utilisé).
+            max_tokens: Plafond de jetons (enregistré, non utilisé).
+
+        Returns:
+            La complétion simulée.
+        """
+        self.calls.append({"system": system, "user": user, "json_mode": json_mode})
+        return AiCompletion(text=self.responder(system, user), input_tokens=10, output_tokens=20)
 
 
 @pytest.fixture

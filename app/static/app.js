@@ -208,6 +208,14 @@ function renderWizard() {
                   placeholder="Décrivez l'objectif et le périmètre du projet"></textarea>
         <small class="field-error" id="err-desc" hidden></small>
       </label>
+      <div class="ai-assist">
+        <label class="field">Grandes idées à structurer par l'IA
+          <textarea id="f-idees" maxlength="2000"
+                    placeholder="Quelques mots-clés ou idées en vrac ; l'IA en rédige une description claire."></textarea>
+        </label>
+        <button type="button" class="btn btn-ghost" id="ai-draft">✨ Rédiger avec l'IA</button>
+        <small class="form-hint">L'IA propose un texte que vous pouvez relire et ajuster.</small>
+      </div>
       <div class="grid-2">
         <label class="field">Direction concernée <span class="req" aria-hidden="true">*</span>
           <select id="f-dir">${DIRECTIONS.map((d) => `<option>${d}</option>`).join("")}</select>
@@ -221,6 +229,32 @@ function renderWizard() {
       <div class="btn-row">
         <button class="btn btn-primary" id="next">Continuer ›</button>
       </div>`);
+
+    document.getElementById("ai-draft").onclick = async () => {
+      const idees = val("f-idees");
+      if (!idees) {
+        toast("Saisissez d'abord quelques idées à structurer.", true);
+        return;
+      }
+      const btn = document.getElementById("ai-draft");
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = "⏳ Rédaction en cours…";
+      try {
+        const res = await api("POST", "/draft-description", {
+          idees: idees,
+          direction: val("f-dir"),
+          nom: val("f-nom") || null,
+        });
+        document.getElementById("f-desc").value = res.description;
+        toast("Description rédigée par l'IA — relisez-la avant de continuer.");
+      } catch (e) {
+        toast(e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    };
 
     document.getElementById("next").onclick = async () => {
       const nom = val("f-nom");

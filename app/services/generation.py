@@ -1,29 +1,55 @@
-"""Service de génération du business plan — version MOCKÉE (US-3.x différée).
+"""Service de génération du business plan (EPIC 3, BIZ-14).
 
-La génération multi-agents IA (EPIC 3, BIZ-14 à BIZ-18) est différée. Ce service
-produit un business plan **déterministe** à partir des données saisies (projet,
-hypothèses financières, score) afin de débloquer la consultation (US-4.1) et
-l'export (US-4.2). Aucune donnée n'est inventée : les chiffres dérivent
-strictement des hypothèses fournies.
+Le service orchestre la génération du business plan. Deux modes coexistent :
 
-À remplacer ultérieurement par l'orchestration Azure AI Foundry.
+* **Mode IA** (``ai_enabled`` actif) : une chaîne d'agents (Analyste, Financier,
+  Rédacteur, Synthèse) rédige le contenu via Azure AI Foundry.
+* **Mode déterministe** (repli) : un contenu template est produit à partir des
+  seules données saisies, sans appel externe.
+
+Garde-fou clé : les **chiffres financiers** (scénarios, ROI, retour sur
+investissement) et le **score** restent calculés par le backend. L'IA rédige et
+commente, elle ne calcule jamais. En cas d'échec IA, le service retombe
+automatiquement sur le mode déterministe afin de toujours produire un livrable.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Final
 
 from sqlalchemy.orm import Session
 
+from app.config import Settings, get_settings
 from app.models import BusinessPlan, Project, Scenario
+from app.schemas.ai import AnalysteOutput, FinancierOutput, RedacteurOutput
+from app.services.ai import agents
+from app.services.ai.client import AiClient, get_ai_client
+from app.services.ai.errors import AiError
 from app.services.financials import get_financials
 from app.services.projects import get_project
+
+logger = logging.getLogger("bizplan.generation")
 
 #: Variation appliquée aux revenus pour les scénarios bas / médian / haut.
 _SCENARIO_FACTORS: Final[dict[str, float]] = {
     "bas": 0.8,
     "median": 1.0,
     "haut": 1.2,
+}
+
+#: Correspondance clé schéma Rédacteur -> titre de section affiché.
+_SECTION_TITLES: Final[dict[str, str]] = {
+    "resume_executif": "Résumé exécutif",
+    "presentation_projet": "Présentation du projet",
+    "analyse_marche": "Analyse du marché et du contexte",
+    "proposition_valeur": "Proposition de valeur",
+    "modele_economique": "Modèle économique",
+    "plan_operationnel": "Plan opérationnel",
+    "analyse_risques": "Analyse des risques",
+    "hypotheses_financieres": "Hypothèses et scénarios financiers",
+    "impact_strategique": "Impact stratégique et RSE",
+    "recommandation": "Recommandation et prochaines étapes",
 }
 
 
@@ -170,12 +196,152 @@ def _build_synthese_codir(project: Project, score_total: float | None) -> str:
     )
 
 
-def generate_business_plan(db: Session, project_id: int) -> BusinessPlan:
-    """Génère (de façon déterministe) le business plan d'un projet.
+def _bullets(items: list[str]) -> str:
+    """Met en forme une liste de points en Markdown.
+
+    Args:
+        items: Éléments à lister.
+
+    Returns:
+        Une liste Markdown, ou une chaîne vide si aucun élément.
+    """
+    return "\n".join(f"- {item}" for item in items if item)
+
+
+def _build_sections_from_ai(
+    redacteur: RedacteurOutput,
+    analyse: AnalysteOutput,
+    financier: FinancierOutput,
+) -> dict[str, str]:
+    """Assemble les sections affichées à partir des sorties des agents IA.
+
+    Les 10 sections rédigées par l'agent Rédacteur sont enrichies par la
+    cartographie des risques de l'agent Analyste et le commentaire qualitatif de
+    l'agent Financier, en conservant les titres de sections existants (l'export
+    et l'UI restent inchangés).
+
+    Args:
+        redacteur: Sections rédactionnelles produites par l'agent Rédacteur.
+        analyse: Analyse stratégique produite par l'agent Analyste.
+        financier: Commentaire financier produit par l'agent Financier.
+
+    Returns:
+        Un dictionnaire ``titre de section -> contenu Markdown``.
+    """
+    fields = redacteur.model_dump()
+    sections = {title: fields[key] for key, title in _SECTION_TITLES.items()}
+
+    risques = _bullets(analyse.risques)
+    if risques:
+        sections["Analyse des risques"] = (
+            f"{sections['Analyse des risques']}\n\n**Risques identifiés :**\n{risques}"
+        )
+
+    commentaire = financier.analyse_globale.strip()
+    if commentaire:
+        sections["Hypothèses et scénarios financiers"] = (
+            f"{sections['Hypothèses et scénarios financiers']}\n\n{commentaire}"
+        )
+    return sections
+
+
+def _generate_with_ai(
+    project: Project,
+    scenarios: dict[str, dict[str, float]],
+    score_total: float | None,
+    client: AiClient,
+) -> tuple[dict[str, str], str]:
+    """Génère le contenu du business plan via la chaîne d'agents IA.
+
+    Args:
+        project: Projet source.
+        scenarios: Scénarios financiers calculés par le backend.
+        score_total: Score de pertinence calculé (0-100) ou ``None``.
+        client: Client IA injecté.
+
+    Returns:
+        Le couple ``(sections, synthèse CODIR)``.
+
+    Raises:
+        AiError: Si l'un des agents échoue (déclenche le repli déterministe).
+    """
+    analyse = agents.run_analyste(
+        nom=project.nom,
+        description=project.description,
+        direction=project.direction,
+        duree_estimee_mois=project.duree_estimee_mois,
+        client=client,
+    )
+    financier = agents.run_financier(scenarios=scenarios, client=client)
+    redacteur = agents.run_redacteur(
+        nom=project.nom,
+        description=project.description,
+        direction=project.direction,
+        duree_estimee_mois=project.duree_estimee_mois,
+        score_total=score_total,
+        scenarios=scenarios,
+        analyse=analyse,
+        client=client,
+    )
+    synthese = agents.run_synthese(
+        nom=project.nom,
+        direction=project.direction,
+        score_total=score_total,
+        resume_executif=redacteur.resume_executif,
+        recommandation=redacteur.recommandation,
+        client=client,
+    )
+    sections = _build_sections_from_ai(redacteur, analyse, financier)
+    return sections, synthese.synthese_codir
+
+
+def _generate_content(
+    project: Project,
+    scenarios: dict[str, dict[str, float]],
+    score_total: float | None,
+    settings: Settings,
+    client: AiClient | None,
+) -> tuple[dict[str, str], str, str]:
+    """Sélectionne le mode de génération (IA ou déterministe) avec repli.
+
+    Args:
+        project: Projet source.
+        scenarios: Scénarios financiers calculés.
+        score_total: Score de pertinence calculé (0-100) ou ``None``.
+        settings: Configuration applicative (flag ``ai_enabled``).
+        client: Client IA optionnel (construit au besoin si l'IA est active).
+
+    Returns:
+        Le triplet ``(sections, synthèse, statut)``. Le statut vaut
+        ``"generated_ai"`` en mode IA, ``"generated"`` en mode déterministe.
+    """
+    if settings.ai_enabled:
+        try:
+            resolved = client or get_ai_client(settings)
+            sections, synthese = _generate_with_ai(project, scenarios, score_total, resolved)
+            return sections, synthese, "generated_ai"
+        except AiError as exc:
+            # Repli déterministe : on garantit toujours un livrable.
+            logger.warning("Génération IA en échec, repli déterministe : %s", exc)
+
+    sections = _build_sections(project, scenarios, score_total)
+    synthese = _build_synthese_codir(project, score_total)
+    return sections, synthese, "generated"
+
+
+def generate_business_plan(
+    db: Session,
+    project_id: int,
+    *,
+    client: AiClient | None = None,
+) -> BusinessPlan:
+    """Génère le business plan d'un projet (mode IA ou déterministe).
 
     Args:
         db: Session de base de données.
         project_id: Identifiant du projet à traiter.
+        client: Client IA optionnel (injecté en test ; sinon construit selon la
+            configuration lorsque l'IA est active).
 
     Returns:
         Le business plan persisté, avec ses sections et scénarios.
@@ -193,8 +359,10 @@ def generate_business_plan(db: Session, project_id: int) -> BusinessPlan:
         financials.couts_annuels,
     )
     score_total = project.scores[-1].total if project.scores else None
-    sections = _build_sections(project, scenarios, score_total)
-    synthese = _build_synthese_codir(project, score_total)
+
+    sections, synthese, bp_status = _generate_content(
+        project, scenarios, score_total, get_settings(), client
+    )
 
     # Remplace un BP / des scénarios existants pour rester idempotent.
     if project.business_plan is not None:
@@ -205,7 +373,7 @@ def generate_business_plan(db: Session, project_id: int) -> BusinessPlan:
 
     business_plan = BusinessPlan(
         project_id=project_id,
-        status="generated",
+        status=bp_status,
         sections=sections,
         synthese_codir=synthese,
     )
