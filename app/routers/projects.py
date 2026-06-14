@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -19,6 +19,7 @@ from app.schemas.financial import (
     FinancialAssumptionCreate,
     FinancialAssumptionResponse,
 )
+from app.schemas.imports import FinancialImportMetadata, FinancialImportResult
 from app.schemas.project import (
     ProjectCreate,
     ProjectResponse,
@@ -37,6 +38,13 @@ from app.services.financials import (
     save_financials,
 )
 from app.services.generation import generate_business_plan
+from app.services.imports import (
+    ExcelImportError,
+    FileTooLargeError,
+    ImportNotFoundError,
+    get_import,
+    import_financials,
+)
 from app.services.projects import (
     ProjectNotFoundError,
     create_project,
@@ -276,6 +284,128 @@ def read_financials(
             detail="Hypothèses financières introuvables",
         ) from exc
     return FinancialAssumptionResponse.model_validate(assumption)
+
+
+@router.post(
+    "/{project_id}/financials/import",
+    response_model=FinancialImportResult,
+    status_code=status.HTTP_201_CREATED,
+    summary="Importer les hypothèses financières depuis un fichier Excel",
+)
+async def import_financials_xlsx(
+    project_id: int,
+    file: UploadFile,
+    db: Annotated[Session, Depends(get_db)],
+) -> FinancialImportResult:
+    """Importe un classeur Excel multi-colonnes et en extrait les finances (BIZ-36).
+
+    Le fichier est validé (extension, taille), parsé de façon déterministe, et
+    les hypothèses extraites sont persistées comme une saisie manuelle. Le
+    fichier d'origine est conservé pour audit et re-téléchargement.
+
+    Args:
+        project_id: Identifiant du projet rattaché.
+        file: Fichier Excel (.xlsx/.xlsm) téléversé.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Les hypothèses extraites et les métadonnées du fichier conservé.
+
+    Raises:
+        HTTPException: 404 si le projet n'existe pas, 413 si le fichier est trop
+            volumineux, 422 si le fichier est invalide ou inexploitable.
+    """
+    content = await file.read()
+    try:
+        record, _ = import_financials(
+            db,
+            project_id,
+            filename=file.filename or "import.xlsx",
+            content_type=file.content_type or "",
+            content=content,
+        )
+    except ProjectNotFoundError as exc:
+        raise _NOT_FOUND from exc
+    except FileTooLargeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Le fichier dépasse la taille maximale autorisée (2 Mio).",
+        ) from exc
+    except ExcelImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+
+    return FinancialImportResult(
+        financials=FinancialAssumptionResponse.model_validate(record.project.financial_assumption),
+        import_file=FinancialImportMetadata.model_validate(record),
+    )
+
+
+@router.get(
+    "/{project_id}/financials/import",
+    response_model=FinancialImportMetadata,
+    summary="Consulter le fichier Excel importé",
+)
+def read_financials_import(
+    project_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> FinancialImportMetadata:
+    """Retourne les métadonnées du dernier fichier Excel importé.
+
+    Args:
+        project_id: Identifiant du projet rattaché.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Les métadonnées du fichier importé.
+
+    Raises:
+        HTTPException: 404 si le projet ou l'import n'existe pas.
+    """
+    try:
+        record = get_import(db, project_id)
+    except (ProjectNotFoundError, ImportNotFoundError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucun fichier Excel importé pour ce projet",
+        ) from exc
+    return FinancialImportMetadata.model_validate(record)
+
+
+@router.get(
+    "/{project_id}/financials/import/file",
+    summary="Télécharger le fichier Excel importé",
+)
+def download_financials_import(
+    project_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    """Télécharge le fichier Excel original importé pour un projet.
+
+    Args:
+        project_id: Identifiant du projet rattaché.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Le fichier Excel en pièce jointe.
+
+    Raises:
+        HTTPException: 404 si le projet ou l'import n'existe pas.
+    """
+    try:
+        record = get_import(db, project_id)
+    except (ProjectNotFoundError, ImportNotFoundError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucun fichier Excel importé pour ce projet",
+        ) from exc
+    return Response(
+        content=record.content,
+        media_type=record.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{record.filename}"'},
+    )
 
 
 @router.put(

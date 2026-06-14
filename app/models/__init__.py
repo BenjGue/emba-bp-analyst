@@ -9,6 +9,7 @@ from __future__ import annotations
 from app.models.project import (
     BusinessPlan,
     FinancialAssumption,
+    FinancialImport,
     Project,
     Scenario,
     Score,
@@ -18,10 +19,9 @@ from app.models.project import (
 __all__ = [
     "BusinessPlan",
     "FinancialAssumption",
+    "FinancialImport",
     "Project",
     "Scenario",
     "Score",
     "StrategicAssessment",
 ]
-
-__all__ = ["Project", "Score"]

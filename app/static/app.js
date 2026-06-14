@@ -294,6 +294,13 @@ function renderWizard() {
   function stepFinancials() {
     shell(`
       <p class="muted">Hypothèses financières du projet.</p>
+      <div class="ai-assist">
+        <label class="field">Importer un fichier Excel (.xlsx)
+          <input id="f-xlsx" type="file" accept=".xlsx,.xlsm" />
+        </label>
+        <button type="button" class="btn btn-ghost" id="xlsx-import">⬆️ Importer depuis Excel</button>
+        <small class="form-hint">Le fichier doit contenir les lignes : investissement initial, revenus annuels, coûts annuels, délai de rentabilité. Les colonnes pluriannuelles sont moyennées.</small>
+      </div>
       <div class="grid-2">
         <label class="field">Investissement initial (€)
           <input id="f-inv" type="number" min="0" value="100000" />
@@ -314,6 +321,48 @@ function renderWizard() {
       </div>`);
 
     document.getElementById("prev").onclick = stepProject;
+    document.getElementById("xlsx-import").onclick = async () => {
+      const input = document.getElementById("f-xlsx");
+      const file = input.files && input.files[0];
+      if (!file) {
+        toast("Sélectionnez d'abord un fichier Excel.", true);
+        return;
+      }
+      const btn = document.getElementById("xlsx-import");
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = "⏳ Import en cours…";
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`/projects/${state.project.id}/financials/import`, {
+          method: "POST",
+          body: form,
+        });
+        if (!res.ok) {
+          let detail = `Erreur ${res.status}`;
+          try {
+            const data = await res.json();
+            if (data.detail) detail = data.detail;
+          } catch (_) {
+            /* corps non JSON */
+          }
+          throw new Error(detail);
+        }
+        const data = await res.json();
+        const f = data.financials;
+        document.getElementById("f-inv").value = f.investissement_initial;
+        document.getElementById("f-rev").value = f.revenus_annuels;
+        document.getElementById("f-cout").value = f.couts_annuels;
+        document.getElementById("f-delai").value = f.delai_rentabilite_mois;
+        toast("Données importées — vérifiez les valeurs avant de continuer.");
+      } catch (e) {
+        toast(e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    };
     document.getElementById("next").onclick = async () => {
       const payload = {
         investissement_initial: Number(val("f-inv")),
