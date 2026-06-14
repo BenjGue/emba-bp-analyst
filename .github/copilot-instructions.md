@@ -34,6 +34,18 @@
 - Les tests d'intégration utilisent `httpx.AsyncClient` avec `pytest-asyncio`.
 - Nommer les tests : `test_<ce_que_ça_fait>_<condition>_<résultat_attendu>`.
 
+## Tests end-to-end (E2E) — obligatoire après chaque merge sur `main`
+
+> Réf. ticket technique : **BIZ-39**.
+
+- **Règle** : après **chaque merge sur `main`**, la **suite E2E Playwright complète doit s'exécuter automatiquement** (workflow GitHub Actions `e2e.yml`, déclenché sur `push: main` après le déploiement), contre l'environnement déployé (Azure Container Apps) ou un environnement éphémère.
+- Les scénarios E2E couvrent les **parcours critiques** : création de projet, saisie/import des finances, scoring, génération et export du business plan.
+- **Détection automatique de bugs** : si un test E2E échoue, le pipeline crée **automatiquement** dans JIRA :
+  1. un ticket de **bug** décrivant le scénario en échec (étapes, trace/capture Playwright, logs, lien vers le run CI) ;
+  2. un ticket de **correctif** associé, de type `Tâche` préfixé `TECH —`, pour le fix.
+- Les **artefacts Playwright** (rapport HTML, traces, vidéos) doivent être publiés en artefacts du run pour audit.
+- **Sécurité** : les identifiants JIRA et secrets sont stockés en **GitHub Secrets** (jamais en dur), avec des tokens à portée minimale.
+
 ## Ce que Copilot doit faire par défaut
 
 1. Proposer du code avec **annotations de type complètes**.
