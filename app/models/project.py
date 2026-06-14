@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, String, Text
+from sqlalchemy import JSON, ForeignKey, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -36,6 +36,7 @@ class Project(Base):
         strategic_assessment: Évaluation stratégique saisie (0 ou 1).
         business_plan: Business plan généré (0 ou 1).
         scenarios: Scénarios financiers générés.
+        financial_import: Fichier Excel financier importé (0 ou 1).
     """
 
     __tablename__ = "projects"
@@ -70,6 +71,11 @@ class Project(Base):
     scenarios: Mapped[list[Scenario]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
+    )
+    financial_import: Mapped[FinancialImport | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
 
@@ -200,3 +206,37 @@ class Scenario(Base):
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     project: Mapped[Project] = relationship(back_populates="scenarios")
+
+
+# Taille maximale (octets) de blob acceptée : oriente MySQL vers MEDIUMBLOB.
+_MAX_IMPORT_BYTES = 5_000_000
+
+
+class FinancialImport(Base):
+    """Fichier Excel de données financières importé pour un projet (BIZ-36).
+
+    Le fichier d'origine est conservé (audit / re-téléchargement) en plus des
+    valeurs extraites, qui alimentent les hypothèses financières du projet.
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché (unique : le dernier import remplace le précédent).
+        filename: Nom du fichier d'origine.
+        content_type: Type MIME déclaré à l'upload.
+        size_bytes: Taille du fichier, en octets.
+        content: Contenu binaire du fichier Excel.
+        uploaded_at: Horodatage de l'import (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "financial_imports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(100))
+    size_bytes: Mapped[int] = mapped_column()
+    content: Mapped[bytes] = mapped_column(LargeBinary(length=_MAX_IMPORT_BYTES))
+    uploaded_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="financial_import")
