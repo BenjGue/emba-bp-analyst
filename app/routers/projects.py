@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.schemas.ai import DescriptionDraftRequest, DescriptionDraftResponse
 from app.schemas.businessplan import BusinessPlanResponse, ScenarioResponse
 from app.schemas.financial import (
     FinancialAssumptionCreate,
@@ -25,6 +26,10 @@ from app.schemas.project import (
     ProjectUpdate,
 )
 from app.schemas.score import ScoreResponse, StrategicDimensions
+from app.services.ai.client import AiClient
+from app.services.ai.deps import get_ai_dependency
+from app.services.ai.description import draft_description
+from app.services.ai.errors import AiResponseError
 from app.services.export import export_filename, to_markdown, to_pdf
 from app.services.financials import (
     FinancialsNotFoundError,
@@ -70,6 +75,41 @@ def create_new_project(
     """
     project = create_project(db, data)
     return ProjectResponse.model_validate(project)
+
+
+@router.post(
+    "/draft-description",
+    response_model=DescriptionDraftResponse,
+    summary="Rédiger une description de projet assistée par IA",
+)
+def draft_project_description(
+    data: DescriptionDraftRequest,
+    ai_client: Annotated[AiClient, Depends(get_ai_dependency)],
+) -> DescriptionDraftResponse:
+    """Rédige une description de projet à partir de quelques idées clés (BIZ-37).
+
+    Le porteur saisit de grandes idées ; l'IA (Sonnet 4.6 via Foundry) produit
+    une description complète et structurée, bornée à 1000 caractères côté
+    backend. Endpoint sans persistance : le texte est renvoyé pour pré-remplir
+    le formulaire de création.
+
+    Args:
+        data: Idées clés et contexte (direction, nom éventuel).
+        ai_client: Client IA injecté (503 si l'IA est désactivée).
+
+    Returns:
+        La description rédigée par l'IA.
+
+    Raises:
+        HTTPException: 502 si le modèle ne renvoie pas de contenu exploitable.
+    """
+    try:
+        return draft_description(data, client=ai_client)
+    except AiResponseError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Le service IA n'a pas pu générer de description.",
+        ) from exc
 
 
 @router.get(
