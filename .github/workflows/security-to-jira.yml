@@ -1,0 +1,49 @@
+name: Security to JIRA
+
+# Fait remonter automatiquement les alertes GitHub Advanced Security (GHAS)
+# dans JIRA, sur le modèle de l'automatisation E2E (BIZ-39, BIZ-44).
+#   - planifié chaque jour ;
+#   - déclenchable manuellement ;
+#   - rejoué dès qu'une nouvelle alerte de code scanning apparaît.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  code_scanning_alert:
+
+permissions:
+  contents: read
+  security-events: read
+
+concurrency:
+  group: security-to-jira
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Synchroniser les alertes GHAS vers JIRA
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Installer httpx
+        run: pip install "httpx>=0.27.0"
+
+      - name: Créer les tickets JIRA depuis les alertes GHAS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: BIZ
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/security_to_jira.py
