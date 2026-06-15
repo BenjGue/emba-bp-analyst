@@ -17,6 +17,10 @@ jobs:
     name: Build → ACR → Azure Container Apps
     runs-on: ubuntu-latest
     environment: dev
+    env:
+      # Mappé depuis le secret d'environnement pour pouvoir tester sa présence
+      # dans un `if:` (le contexte `secrets` n'est pas disponible en condition).
+      DB_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -35,12 +39,27 @@ jobs:
             --image bizplan-api:${{ github.sha }} \
             .
 
+      # Persistance MySQL (BIZ-29 / BIZ-41) — réassertion idempotente du secret
+      # de connexion. Le secret de la Container App est rafraîchi depuis le
+      # secret d'environnement GitHub `DATABASE_URL` (jamais en clair dans le
+      # dépôt). L'étape est ignorée si le secret n'est pas configuré, afin de ne
+      # pas casser un déploiement ; la variable d'env reste posée ci-dessous tant
+      # que le secret applicatif `database-url` existe déjà.
+      - name: Assurer le secret DATABASE_URL (idempotent)
+        if: ${{ env.DB_URL != '' }}
+        run: |
+          az containerapp secret set \
+            --name bizplan-api-dev \
+            --resource-group rg-bizplan-dev \
+            --secrets "database-url=$DB_URL"
+
       - name: Déployer sur Azure Container Apps
         run: |
           az containerapp update \
             --name bizplan-api-dev \
             --resource-group rg-bizplan-dev \
-            --image acrbizplandev.azurecr.io/bizplan-api:${{ github.sha }}
+            --image acrbizplandev.azurecr.io/bizplan-api:${{ github.sha }} \
+            --set-env-vars "DATABASE_URL=secretref:database-url"
 
       - name: Vérifier la santé de l'app
         run: |
