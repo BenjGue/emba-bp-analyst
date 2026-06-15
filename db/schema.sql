@@ -1,7 +1,8 @@
 -- Schéma relationnel BizPlan-IA (MySQL 8) — BIZ-22
 -- DDL idempotent : recrée le schéma applicatif complet.
--- En production l'ORM SQLAlchemy crée les tables (create_all) ; ce fichier
--- documente le modèle et sert au provisionnement manuel / aux revues.
+-- Source de vérité du schéma : les migrations Alembic (migrations/versions/,
+-- BIZ-29), appliquées automatiquement au démarrage. Ce fichier documente le
+-- modèle et sert au provisionnement manuel / aux revues.
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -75,6 +76,19 @@ CREATE TABLE IF NOT EXISTS scenarios (
     created_at  DATETIME    NOT NULL,
     INDEX ix_scenarios_project (project_id),
     CONSTRAINT fk_scenario_project FOREIGN KEY (project_id)
+        REFERENCES projects (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS financial_imports (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    project_id    INT          NOT NULL,
+    filename      VARCHAR(255) NOT NULL,
+    content_type  VARCHAR(100) NOT NULL,
+    size_bytes    INT          NOT NULL,
+    content       MEDIUMBLOB   NOT NULL,
+    uploaded_at   DATETIME     NOT NULL,
+    UNIQUE KEY uq_import_project (project_id),
+    CONSTRAINT fk_import_project FOREIGN KEY (project_id)
         REFERENCES projects (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
