@@ -174,7 +174,20 @@ function escapeHtml(str) {
 
 // -------- Vue : assistant de création --------
 function renderWizard() {
-  const state = { project: null, financials: null, score: null };
+  const state = {
+    project: null,
+    financials: null,
+    score: null,
+    // Saisies de l'étape 1 conservées pour la navigation Précédent/Continuer
+    // (BIZ-40) : restituées à chaque rendu de l'étape Projet.
+    form: {
+      nom: "",
+      description: "",
+      idees: "",
+      direction: DIRECTIONS[0],
+      duree: "12",
+    },
+  };
   let step = 1;
 
   function steps() {
@@ -230,6 +243,25 @@ function renderWizard() {
         <button class="btn btn-primary" id="next">Continuer ›</button>
       </div>`);
 
+    // Restitue les saisies précédentes (navigation Précédent/Continuer, BIZ-40).
+    document.getElementById("f-nom").value = state.form.nom;
+    document.getElementById("f-desc").value = state.form.description;
+    document.getElementById("f-idees").value = state.form.idees;
+    document.getElementById("f-dir").value = state.form.direction;
+    document.getElementById("f-duree").value = state.form.duree;
+
+    // Mémorise chaque saisie en continu pour la conserver entre les étapes.
+    function captureForm() {
+      state.form.nom = val("f-nom");
+      state.form.description = val("f-desc");
+      state.form.idees = val("f-idees");
+      state.form.direction = val("f-dir");
+      state.form.duree = val("f-duree");
+    }
+    for (const id of ["f-nom", "f-desc", "f-idees", "f-dir", "f-duree"]) {
+      document.getElementById(id).addEventListener("input", captureForm);
+    }
+
     document.getElementById("ai-draft").onclick = async () => {
       const idees = val("f-idees");
       if (!idees) {
@@ -247,6 +279,7 @@ function renderWizard() {
           nom: val("f-nom") || null,
         });
         document.getElementById("f-desc").value = res.description;
+        state.form.description = res.description;
         toast("Description rédigée par l'IA — relisez-la avant de continuer.");
       } catch (e) {
         toast(e.message, true);
@@ -281,8 +314,16 @@ function renderWizard() {
         direction: val("f-dir"),
         duree_estimee_mois: duree,
       };
+      // Conserve les saisies pour un éventuel retour à cette étape (BIZ-40).
+      captureForm();
       try {
-        state.project = await api("POST", "", payload);
+        // Réutilise le projet déjà créé si l'on revient sur cette étape, pour
+        // éviter de créer des doublons à chaque clic sur « Continuer » (BIZ-40).
+        if (state.project) {
+          state.project = await api("PUT", `/${state.project.id}`, payload);
+        } else {
+          state.project = await api("POST", "", payload);
+        }
         step = 2;
         stepFinancials();
       } catch (e) {
