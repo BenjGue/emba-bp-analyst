@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from functools import lru_cache
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -16,6 +17,9 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.pool import StaticPool
 
 from app.config import get_settings
+
+# Racine du dépôt : permet de localiser ``alembic.ini`` et ``migrations/``.
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class Base(DeclarativeBase):
@@ -61,3 +65,18 @@ def init_db() -> None:
     from app import models  # noqa: F401  (enregistre les tables sur ``Base``)
 
     Base.metadata.create_all(bind=get_engine())
+
+
+def run_migrations() -> None:
+    """Applique les migrations Alembic jusqu'à la dernière révision (``head``).
+
+    Utilisé en production (MySQL) pour faire évoluer le schéma de façon
+    versionnée et auditable, plutôt que par ``create_all``. L'opération est
+    idempotente : si la base est déjà à jour, aucune modification n'est faite.
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    config = Config(str(_PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(_PROJECT_ROOT / "migrations"))
+    command.upgrade(config, "head")

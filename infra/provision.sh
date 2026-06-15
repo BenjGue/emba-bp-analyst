@@ -180,6 +180,45 @@ else
 fi
 echo "   ✅ ${ACA_APP} (image placeholder — sera remplacée par CI/CD)"
 
+# ── 6b. Persistance prod : DATABASE_URL via Key Vault (BIZ-29) ────────────────
+# La connection string MySQL est stockée dans Key Vault (secret DATABASE-URL).
+# On l'injecte dans la Container App via une *Key Vault reference* lue grâce à
+# l'identité managée de l'app — aucun secret n'est écrit en clair dans la conf.
+echo ""
+echo "▶ 6b/7 — Branchement DATABASE_URL (Key Vault → Container App)"
+
+# 1. Identité managée affectée par le système
+ACA_PRINCIPAL_ID=$(az containerapp identity assign \
+    --resource-group "${RG}" \
+    --name "${ACA_APP}" \
+    --system-assigned \
+    --query principalId -o tsv)
+
+# 2. Autoriser l'identité à lire les secrets du Key Vault (RBAC)
+KEYVAULT_ID=$(az keyvault show --name "${KEYVAULT}" --query id -o tsv)
+az role assignment create \
+    --assignee-object-id "${ACA_PRINCIPAL_ID}" \
+    --assignee-principal-type ServicePrincipal \
+    --role "Key Vault Secrets User" \
+    --scope "${KEYVAULT_ID}" \
+    --output none 2>/dev/null || true
+
+# 3. Déclarer le secret de l'app comme référence Key Vault (résolue via l'identité)
+KV_SECRET_URI="https://${KEYVAULT}.vault.azure.net/secrets/DATABASE-URL"
+az containerapp secret set \
+    --resource-group "${RG}" \
+    --name "${ACA_APP}" \
+    --secrets "database-url=keyvaultref:${KV_SECRET_URI},identityref:system" \
+    --output none
+
+# 4. Exposer le secret en variable d'environnement DATABASE_URL
+az containerapp update \
+    --resource-group "${RG}" \
+    --name "${ACA_APP}" \
+    --set-env-vars "DATABASE_URL=secretref:database-url" \
+    --output none
+echo "   ✅ DATABASE_URL branché sur Key Vault (MySQL persistant)"
+
 # ── 7. OIDC — Federated credentials pour GitHub Actions ──────────────────────
 echo ""
 echo "▶ 7/7 — OIDC / Federated credentials GitHub Actions"

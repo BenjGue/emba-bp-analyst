@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import __version__
 from app.config import get_settings
-from app.db import init_db
+from app.db import init_db, run_migrations
 from app.routers import health, projects, score
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -26,13 +26,20 @@ _STATIC_DIR = Path(__file__).parent / "static"
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     """Initialise la base de données au démarrage de l'application.
 
+    Sur SQLite (développement / tests), les tables sont créées directement
+    depuis les modèles. Sur une base réelle (MySQL en production), le schéma
+    est mis à niveau via les migrations Alembic versionnées (BIZ-29).
+
     Args:
         application: Instance FastAPI en cours de démarrage.
 
     Yields:
         Le contrôle pendant la durée de vie de l'application.
     """
-    init_db()
+    if get_settings().database_url.startswith("sqlite"):
+        init_db()
+    else:
+        run_migrations()
     yield
 
 
