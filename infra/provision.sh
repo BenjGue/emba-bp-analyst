@@ -133,7 +133,10 @@ az mysql flexible-server firewall-rule create \
     --output none
 
 MYSQL_HOST="${MYSQL_SERVER}.mysql.database.azure.com"
-DB_URL="mysql+pymysql://${MYSQL_ADMIN}:${MYSQL_PASSWORD}@${MYSQL_HOST}/${MYSQL_DB}?ssl_ca=DigiCertGlobalRootG2.crt.pem"
+# ssl_ca pointe sur le bundle d'autorités du système (image Debian slim), qui
+# contient « DigiCert Global Root G2 » utilisé par Azure Database for MySQL.
+# (Ne pas référencer un fichier .pem relatif : il n'existe pas dans l'image.)
+DB_URL="mysql+pymysql://${MYSQL_ADMIN}:${MYSQL_PASSWORD}@${MYSQL_HOST}/${MYSQL_DB}?ssl_ca=/etc/ssl/certs/ca-certificates.crt"
 
 echo "   ✅ ${MYSQL_HOST}"
 
@@ -180,44 +183,38 @@ else
 fi
 echo "   ✅ ${ACA_APP} (image placeholder — sera remplacée par CI/CD)"
 
-# ── 6b. Persistance prod : DATABASE_URL via Key Vault (BIZ-29) ────────────────
-# La connection string MySQL est stockée dans Key Vault (secret DATABASE-URL).
-# On l'injecte dans la Container App via une *Key Vault reference* lue grâce à
-# l'identité managée de l'app — aucun secret n'est écrit en clair dans la conf.
+# ── 6b. Persistance prod : DATABASE_URL (BIZ-29 / BIZ-41) ─────────────────────
+# La connection string MySQL est stockée dans Key Vault (secret DATABASE-URL)
+# comme source de vérité. Pour le câblage effectif de la Container App, on pose
+# un secret applicatif `database-url` *directement* à partir de la valeur connue
+# ici (DB_URL) : c'est idempotent et fonctionne même si l'accès public du Key
+# Vault est désactivé (pas de dépendance à une Key Vault reference ni à un
+# endpoint privé). Aucun secret n'apparaît en clair dans la configuration : il
+# est masqué dans le store de secrets de la Container App.
 echo ""
-echo "▶ 6b/7 — Branchement DATABASE_URL (Key Vault → Container App)"
+echo "▶ 6b/7 — Branchement DATABASE_URL (secret Container App)"
 
-# 1. Identité managée affectée par le système
-ACA_PRINCIPAL_ID=$(az containerapp identity assign \
+# 1. Identité managée affectée par le système (utile pour d'autres usages)
+az containerapp identity assign \
     --resource-group "${RG}" \
     --name "${ACA_APP}" \
     --system-assigned \
-    --query principalId -o tsv)
+    --output none
 
-# 2. Autoriser l'identité à lire les secrets du Key Vault (RBAC)
-KEYVAULT_ID=$(az keyvault show --name "${KEYVAULT}" --query id -o tsv)
-az role assignment create \
-    --assignee-object-id "${ACA_PRINCIPAL_ID}" \
-    --assignee-principal-type ServicePrincipal \
-    --role "Key Vault Secrets User" \
-    --scope "${KEYVAULT_ID}" \
-    --output none 2>/dev/null || true
-
-# 3. Déclarer le secret de l'app comme référence Key Vault (résolue via l'identité)
-KV_SECRET_URI="https://${KEYVAULT}.vault.azure.net/secrets/DATABASE-URL"
+# 2. Secret applicatif `database-url` posé directement (idempotent)
 az containerapp secret set \
     --resource-group "${RG}" \
     --name "${ACA_APP}" \
-    --secrets "database-url=keyvaultref:${KV_SECRET_URI},identityref:system" \
+    --secrets "database-url=${DB_URL}" \
     --output none
 
-# 4. Exposer le secret en variable d'environnement DATABASE_URL
+# 3. Exposer le secret en variable d'environnement DATABASE_URL
 az containerapp update \
     --resource-group "${RG}" \
     --name "${ACA_APP}" \
     --set-env-vars "DATABASE_URL=secretref:database-url" \
     --output none
-echo "   ✅ DATABASE_URL branché sur Key Vault (MySQL persistant)"
+echo "   ✅ DATABASE_URL branché (secret Container App → MySQL persistant)"
 
 # ── 7. OIDC — Federated credentials pour GitHub Actions ──────────────────────
 echo ""
