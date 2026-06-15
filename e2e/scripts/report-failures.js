@@ -142,6 +142,37 @@ async function createIssue(fields) {
   return res.json();
 }
 
+/**
+ * Crée un lien « Relates » entre deux tickets JIRA. Best-effort : un échec de
+ * liaison ne fait pas échouer le job (les tickets restent créés).
+ */
+async function linkIssues(inwardKey, outwardKey) {
+  const auth = Buffer.from(`${EMAIL}:${TOKEN}`).toString("base64");
+  try {
+    const res = await fetch(`${BASE_URL}/rest/api/3/issueLink`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        type: { name: "Relates" },
+        inwardIssue: { key: inwardKey },
+        outwardIssue: { key: outwardKey },
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      console.warn(`Liaison ${inwardKey}↔${outwardKey} ignorée (${res.status}) : ${detail}`);
+      return;
+    }
+    console.log(`Lien créé : ${inwardKey} ↔ ${outwardKey}`);
+  } catch (err) {
+    console.warn(`Liaison ${inwardKey}↔${outwardKey} ignorée : ${String(err)}`);
+  }
+}
+
 async function main() {
   if (!BASE_URL || !EMAIL || !TOKEN) {
     console.error(
@@ -180,6 +211,9 @@ async function main() {
     description: buildFixDescription(bug.key, failures),
   });
   console.log(`Correctif créé : ${fix.key}`);
+
+  // Lier le correctif au bug (« ticket de correctif associé » — BIZ-39).
+  await linkIssues(fix.key, bug.key);
 }
 
 main().catch((err) => {
