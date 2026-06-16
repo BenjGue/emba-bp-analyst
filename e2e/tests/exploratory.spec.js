@@ -91,10 +91,11 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
     await deleteProject(request, baseURL, id);
   });
 
-  test("assistance IA : bouton sans idée affiche un toast d'erreur", async ({ page }) => {
+  test("assistance IA : reformater sans description affiche un toast d'erreur", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
-    await page.locator("#ai-draft").click();
+    // Le champ description est vide -> le bouton de reformatage refuse et avertit.
+    await page.locator("#ai-reformat").click();
     await expect(page.locator("#toast")).toBeVisible();
     await expect(page.locator("#toast")).toHaveClass(/error/);
   });
@@ -102,8 +103,8 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
   test("assistance IA : échec backend géré proprement (pas de crash)", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
-    await page.locator("#f-idees").fill("casiers connectés bureau de poste, livraison J+1");
-    await page.locator("#ai-draft").click();
+    await page.locator("#f-desc").fill("casiers connectés bureau de poste, livraison J+1");
+    await page.locator("#ai-reformat").click();
     // L'IA est désactivée côté serveur -> toast d'erreur attendu, l'app reste utilisable.
     await expect(page.locator("#toast")).toBeVisible({ timeout: 20000 });
     await expect(page.locator("#f-nom")).toBeVisible();
