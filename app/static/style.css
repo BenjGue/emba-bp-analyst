@@ -212,6 +212,56 @@ label.field {
   margin-bottom: 0;
 }
 
+/* En-tête de l'assistant : titre + action IA alignée à droite (BIZ-55). */
+.wizard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.wizard-head h2 {
+  margin: 0;
+}
+
+.btn-ai {
+  white-space: nowrap;
+}
+
+/* Synthèse de la logique IA sur l'écran d'évaluation (BIZ-56). */
+.ai-synthese {
+  border-left: 3px solid var(--accent, #6a4cff);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1rem;
+  background: rgba(106, 76, 255, 0.06);
+}
+
+.ai-synthese p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: var(--gris-txt);
+}
+
+.ai-synthese--off {
+  border-left-color: var(--bordure, #d0d0d8);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ai-note-hint {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--gris-txt);
+  margin-top: 0.2rem;
+}
+
+.ai-eval-loading {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--gris-txt);
+}
+
 .field input.invalid,
 .field select.invalid,
 .field textarea.invalid {

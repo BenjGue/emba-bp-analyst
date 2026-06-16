@@ -31,11 +31,17 @@ from app.schemas.project import (
     ProjectSummary,
     ProjectUpdate,
 )
-from app.schemas.score import ScoreResponse, StrategicDimensions
+from app.schemas.score import (
+    DimensionsSubmission,
+    DimensionSuggestion,
+    ScoreResponse,
+    StrategicDimensions,
+)
 from app.services.ai.client import AiClient
 from app.services.ai.deps import get_ai_dependency
 from app.services.ai.description import draft_description
 from app.services.ai.errors import AiResponseError
+from app.services.ai.evaluation import suggest_dimensions
 from app.services.export import export_filename, to_markdown, to_pdf
 from app.services.financials import (
     FinancialsNotFoundError,
@@ -515,14 +521,19 @@ def read_financial_statement(
 )
 def upsert_dimensions(
     project_id: int,
-    dimensions: StrategicDimensions,
+    dimensions: DimensionsSubmission,
     db: Annotated[Session, Depends(get_db)],
 ) -> ScoreResponse:
     """Sauvegarde l'évaluation stratégique et calcule le score (US-1.3).
 
+    Les notes peuvent provenir d'une proposition de l'IA (BIZ-56) ; les champs
+    facultatifs ``ai_synthese`` (logique de l'IA) et ``justification`` (raison
+    d'une modification manuelle) sont conservés pour l'audit.
+
     Args:
         project_id: Identifiant du projet évalué.
-        dimensions: Notes stratégiques (6 dimensions, entiers 0-10).
+        dimensions: Notes stratégiques (6 dimensions, entiers 0-10) et contexte
+            d'audit facultatif.
         db: Session de base de données injectée par FastAPI.
 
     Returns:
@@ -535,6 +546,69 @@ def upsert_dimensions(
         return save_dimensions(db, project_id, dimensions)
     except ProjectNotFoundError as exc:
         raise _NOT_FOUND from exc
+
+
+@router.post(
+    "/{project_id}/dimensions/suggest",
+    response_model=DimensionSuggestion,
+    summary="Proposer les notes stratégiques via l'IA",
+)
+def suggest_project_dimensions(
+    project_id: int,
+    ai_client: Annotated[AiClient, Depends(get_ai_dependency)],
+    db: Annotated[Session, Depends(get_db)],
+) -> DimensionSuggestion:
+    """Propose les 6 notes stratégiques d'un projet via l'IA (BIZ-56).
+
+    L'IA déduit les notes des données saisies en partie A (description,
+    direction, durée et hypothèses financières si disponibles), les justifie et
+    fournit une synthèse de sa logique. Le score est calculé de façon
+    déterministe à partir des notes proposées. Endpoint sans persistance : la
+    proposition pré-remplit l'écran d'évaluation, l'utilisateur pouvant l'ajuster.
+
+    Args:
+        project_id: Identifiant du projet évalué.
+        ai_client: Client IA injecté (503 si l'IA est désactivée).
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Les notes proposées, leurs justifications, la synthèse et le score.
+
+    Raises:
+        HTTPException: 404 si le projet n'existe pas, 502 si la réponse IA est
+            inexploitable.
+    """
+    try:
+        project = get_project(db, project_id)
+    except ProjectNotFoundError as exc:
+        raise _NOT_FOUND from exc
+
+    financials: dict[str, float] | None = None
+    try:
+        assumption = get_financials(db, project_id)
+        financials = {
+            "investissement_initial": assumption.investissement_initial,
+            "revenus_annuels": assumption.revenus_annuels,
+            "couts_annuels": assumption.couts_annuels,
+            "delai_rentabilite_mois": float(assumption.delai_rentabilite_mois),
+        }
+    except FinancialsNotFoundError:
+        financials = None
+
+    try:
+        return suggest_dimensions(
+            nom=project.nom,
+            description=project.description,
+            direction=project.direction,
+            duree_estimee_mois=project.duree_estimee_mois,
+            financials=financials,
+            client=ai_client,
+        )
+    except AiResponseError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Le service IA n'a pas pu proposer de notes stratégiques.",
+        ) from exc
 
 
 @router.post(

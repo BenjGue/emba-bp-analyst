@@ -147,6 +147,10 @@ class StrategicAssessment(Base):
         impact_operationnel: Note d'impact opérationnel (0-10).
         impact_social: Note d'impact social/environnemental (0-10).
         faisabilite: Note de faisabilité technique (0-10).
+        ai_synthese: Synthèse de la logique de l'IA ayant proposé les notes
+            (BIZ-56), conservée pour l'audit.
+        user_justification: Justification d'une modification manuelle des notes
+            proposées par l'IA (BIZ-56).
         created_at: Horodatage de saisie (UTC).
         project: Projet associé.
     """
@@ -161,6 +165,8 @@ class StrategicAssessment(Base):
     impact_operationnel: Mapped[int]
     impact_social: Mapped[int]
     faisabilite: Mapped[int]
+    ai_synthese: Mapped[str | None] = mapped_column(Text, default=None)
+    user_justification: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     project: Mapped[Project] = relationship(back_populates="strategic_assessment")

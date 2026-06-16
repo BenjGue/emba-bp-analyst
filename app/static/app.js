@@ -255,8 +255,9 @@ function renderStatement(stmt) {
 // -------- Vue : assistant de création --------
 function renderWizard() {
   // Invalide tout rendu asynchrone en cours (dashboard/fiche) afin qu'une
-  // réponse API tardive n'écrase pas l'assistant (BIZ-53).
-  beginRender();
+  // réponse API tardive n'écrase pas l'assistant (BIZ-53). Le jeton est
+  // réutilisé par les étapes asynchrones (proposition IA des notes, BIZ-56).
+  const renderToken = beginRender();
   const state = {
     project: null,
     financials: null,
@@ -266,7 +267,6 @@ function renderWizard() {
     form: {
       nom: "",
       description: "",
-      idees: "",
       direction: DIRECTIONS[0],
       duree: "12",
     },
@@ -284,16 +284,20 @@ function renderWizard() {
       .join("")}</div>`;
   }
 
-  function shell(inner) {
+  function shell(inner, headerAction = "") {
     view.innerHTML = `
       <button class="back" data-nav="dashboard">‹ Retour au tableau de bord</button>
-      <h2>Nouveau projet</h2>
+      <div class="wizard-head">
+        <h2>Nouveau projet</h2>
+        ${headerAction}
+      </div>
       ${steps()}
       <div class="card">${inner}</div>`;
   }
 
   function stepProject() {
-    shell(`
+    shell(
+      `
       <label class="field">Nom du projet <span class="req" aria-hidden="true">*</span>
         <input id="f-nom" maxlength="200" required aria-required="true"
                placeholder="Ex. Casiers connectés en bureau de poste" />
@@ -301,17 +305,10 @@ function renderWizard() {
       </label>
       <label class="field">Description <span class="req" aria-hidden="true">*</span>
         <textarea id="f-desc" maxlength="1000" required aria-required="true"
-                  placeholder="Décrivez l'objectif et le périmètre du projet"></textarea>
+                  placeholder="Écrivez librement vos idées ; le bouton ✨ en haut à droite les reformate."></textarea>
         <small class="field-error" id="err-desc" hidden></small>
+        <small class="form-hint">L'IA reformule l'intégralité du champ ; vous pourrez relire et ajuster.</small>
       </label>
-      <div class="ai-assist">
-        <label class="field">Grandes idées à structurer par l'IA
-          <textarea id="f-idees" maxlength="2000"
-                    placeholder="Quelques mots-clés ou idées en vrac ; l'IA en rédige une description claire."></textarea>
-        </label>
-        <button type="button" class="btn btn-ghost" id="ai-draft">✨ Rédiger avec l'IA</button>
-        <small class="form-hint">L'IA propose un texte que vous pouvez relire et ajuster.</small>
-      </div>
       <div class="grid-2">
         <label class="field">Direction concernée <span class="req" aria-hidden="true">*</span>
           <select id="f-dir">${DIRECTIONS.map((d) => `<option>${d}</option>`).join("")}</select>
@@ -324,12 +321,14 @@ function renderWizard() {
       <p class="form-hint"><span class="req" aria-hidden="true">*</span> Champs obligatoires</p>
       <div class="btn-row">
         <button class="btn btn-primary" id="next">Continuer ›</button>
-      </div>`);
+      </div>`,
+      `<button type="button" class="btn btn-ghost btn-ai" id="ai-reformat"
+               title="Reformater la description avec l'IA">✨ Reformater avec l'IA</button>`,
+    );
 
     // Restitue les saisies précédentes (navigation Précédent/Continuer, BIZ-40).
     document.getElementById("f-nom").value = state.form.nom;
     document.getElementById("f-desc").value = state.form.description;
-    document.getElementById("f-idees").value = state.form.idees;
     document.getElementById("f-dir").value = state.form.direction;
     document.getElementById("f-duree").value = state.form.duree;
 
@@ -337,33 +336,34 @@ function renderWizard() {
     function captureForm() {
       state.form.nom = val("f-nom");
       state.form.description = val("f-desc");
-      state.form.idees = val("f-idees");
       state.form.direction = val("f-dir");
       state.form.duree = val("f-duree");
     }
-    for (const id of ["f-nom", "f-desc", "f-idees", "f-dir", "f-duree"]) {
+    for (const id of ["f-nom", "f-desc", "f-dir", "f-duree"]) {
       document.getElementById(id).addEventListener("input", captureForm);
     }
 
-    document.getElementById("ai-draft").onclick = async () => {
-      const idees = val("f-idees");
-      if (!idees) {
-        toast("Saisissez d'abord quelques idées à structurer.", true);
+    // Bouton IA (en haut à droite du titre) : reformate tout le champ
+    // description en place à partir de son contenu actuel (BIZ-55).
+    document.getElementById("ai-reformat").onclick = async () => {
+      const description = val("f-desc");
+      if (!description) {
+        toast("Saisissez d'abord une description à reformater.", true);
         return;
       }
-      const btn = document.getElementById("ai-draft");
+      const btn = document.getElementById("ai-reformat");
       btn.disabled = true;
       const label = btn.textContent;
-      btn.textContent = "⏳ Rédaction en cours…";
+      btn.textContent = "⏳ Reformatage en cours…";
       try {
         const res = await api("POST", "/draft-description", {
-          idees: idees,
+          idees: description,
           direction: val("f-dir"),
           nom: val("f-nom") || null,
         });
         document.getElementById("f-desc").value = res.description;
         state.form.description = res.description;
-        toast("Description rédigée par l'IA — relisez-la avant de continuer.");
+        toast("Description reformatée par l'IA — relisez-la avant de continuer.");
       } catch (e) {
         toast(e.message, true);
       } finally {
@@ -555,31 +555,124 @@ function renderWizard() {
   }
 
   function stepDimensions() {
+    const token = renderToken;
+    // État mutable partagé : la proposition IA arrive de façon asynchrone et
+    // enrichit le formulaire déjà affiché (BIZ-56).
+    const aiState = { suggestion: null };
+    renderDimensionsForm(aiState);
+
+    // L'IA propose les notes à partir des inputs de la partie A. Le formulaire
+    // est déjà rendu (curseurs à 5, bouton « Calculer le score » présent) : on
+    // l'enrichit dès la réponse reçue. En cas d'IA désactivée (503) ou de
+    // réponse inexploitable (502), on reste en saisie manuelle.
+    api("POST", `/${state.project.id}/dimensions/suggest`)
+      .then((suggestion) => {
+        if (isStaleRender(token) || !document.getElementById("d-rentabilite")) return;
+        aiState.suggestion = suggestion;
+        applySuggestion(suggestion);
+      })
+      .catch(() => {
+        if (isStaleRender(token)) return;
+        const box = document.getElementById("ai-synthese-box");
+        if (box) {
+          box.className = "ai-synthese ai-synthese--off";
+          box.innerHTML =
+            "<strong>IA indisponible</strong>" +
+            "<p>Renseignez manuellement chaque dimension (0 à 10).</p>";
+        }
+      });
+  }
+
+  function applySuggestion(suggestion) {
+    const justifs = suggestion.justifications || {};
+    for (const [key] of DIMENSIONS) {
+      const v = Number(suggestion.dimensions[key]);
+      const input = document.getElementById(`d-${key}`);
+      const output = document.getElementById(`o-${key}`);
+      const hint = document.getElementById(`hint-${key}`);
+      if (input) {
+        input.value = String(v);
+        input.dataset.ai = String(v);
+      }
+      if (output) output.textContent = String(v);
+      if (hint) {
+        hint.textContent = `IA : ${v}/10${justifs[key] ? ` — ${justifs[key]}` : ""}`;
+      }
+    }
+    const box = document.getElementById("ai-synthese-box");
+    if (box) {
+      box.className = "ai-synthese";
+      box.innerHTML = `<strong>✨ Logique de l'IA</strong><p>${escapeHtml(
+        suggestion.synthese || "",
+      )}</p>`;
+    }
+    const wrap = document.getElementById("justif-wrap");
+    if (wrap) wrap.hidden = true;
+  }
+
+  function renderDimensionsForm(aiState) {
     const sliders = DIMENSIONS.map(
       ([key, label]) => `
         <label class="field">${label} : <output id="o-${key}">5</output> / 10
-          <input id="d-${key}" type="range" min="0" max="10" value="5"
+          <input id="d-${key}" type="range" min="0" max="10" value="5" data-ai=""
                  oninput="document.getElementById('o-${key}').textContent=this.value" />
+          <small class="ai-note-hint" id="hint-${key}"></small>
         </label>`,
     ).join("");
+
     shell(`
-      <p class="muted">Évaluez chaque dimension stratégique (0 à 10).</p>
+      <div class="ai-synthese" id="ai-synthese-box">
+        <strong>✨ Évaluation par l'IA</strong>
+        <p>⏳ L'IA évalue le projet à partir des informations saisies…</p>
+      </div>
+      <p class="muted">L'IA propose ces notes ; ajustez-les si nécessaire (avec justification).</p>
       ${sliders}
+      <label class="field" id="justif-wrap" hidden="">
+        Justification de vos modifications
+        <textarea id="f-justif" maxlength="2000"
+                  placeholder="Expliquez pourquoi vous modifiez les notes proposées par l'IA."></textarea>
+        <small class="field-error" id="err-justif" hidden></small>
+      </label>
       <div class="btn-row">
         <button class="btn btn-ghost" id="prev">‹ Précédent</button>
         <button class="btn btn-accent" id="next">Calculer le score ›</button>
       </div>`);
 
+    // Affiche le champ de justification dès qu'une note diffère de la
+    // proposition de l'IA (BIZ-56).
+    function isModified() {
+      if (!aiState.suggestion) return false;
+      return DIMENSIONS.some(([key]) => {
+        const input = document.getElementById(`d-${key}`);
+        return input.dataset.ai !== "" && Number(input.value) !== Number(input.dataset.ai);
+      });
+    }
+    function refreshJustif() {
+      const wrap = document.getElementById("justif-wrap");
+      if (aiState.suggestion) wrap.hidden = !isModified();
+    }
+    for (const [key] of DIMENSIONS) {
+      document.getElementById(`d-${key}`).addEventListener("input", refreshJustif);
+    }
+
     document.getElementById("prev").onclick = stepFinancials;
     document.getElementById("next").onclick = async () => {
       const payload = {};
       for (const [key] of DIMENSIONS) payload[key] = Number(val(`d-${key}`));
+
+      const justification = val("f-justif").trim();
+      const modified = isModified();
+      const errors = {};
+      if (modified && !justification) {
+        errors["justif"] = "Justifiez la modification des notes proposées par l'IA.";
+      }
+      if (!applyFieldErrors(["justif"], errors)) return;
+
+      if (aiState.suggestion) payload["ai_synthese"] = aiState.suggestion.synthese || null;
+      if (justification) payload["justification"] = justification;
+
       try {
-        state.score = await api(
-          "PUT",
-          `/${state.project.id}/dimensions`,
-          payload,
-        );
+        state.score = await api("PUT", `/${state.project.id}/dimensions`, payload);
         step = 4;
         stepRecap();
       } catch (e) {

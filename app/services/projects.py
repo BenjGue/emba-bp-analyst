@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Project, Score, StrategicAssessment
 from app.schemas.project import Direction, ProjectCreate, ProjectSummary, ProjectUpdate
-from app.schemas.score import ScoreResponse, StrategicDimensions
+from app.schemas.score import DimensionsSubmission, ScoreResponse, StrategicDimensions
 from app.services.scoring import compute_score
 
 
@@ -149,12 +149,16 @@ def save_dimensions(
     """Sauvegarde l'évaluation stratégique et (re)calcule le score (US-1.3).
 
     L'évaluation est créée ou mise à jour (une seule par projet), puis le score
-    de pertinence est calculé et historisé.
+    de pertinence est calculé et historisé. Si les notes sont fournies sous
+    forme de ``DimensionsSubmission`` (BIZ-56), la synthèse de la logique IA et
+    la justification d'une modification manuelle sont conservées pour l'audit.
 
     Args:
         db: Session de base de données.
         project_id: Identifiant du projet évalué.
-        dimensions: Notes stratégiques saisies (6 dimensions, 0-10).
+        dimensions: Notes stratégiques saisies (6 dimensions, 0-10), avec
+            éventuellement les champs d'audit ``ai_synthese`` et
+            ``justification``.
 
     Returns:
         Le score global et le détail par dimension.
@@ -174,6 +178,9 @@ def save_dimensions(
     assessment.impact_operationnel = dimensions.impact_operationnel
     assessment.impact_social = dimensions.impact_social
     assessment.faisabilite = dimensions.faisabilite
+    if isinstance(dimensions, DimensionsSubmission):
+        assessment.ai_synthese = dimensions.ai_synthese
+        assessment.user_justification = dimensions.justification
 
     result = compute_score(dimensions)
     record = Score(
