@@ -21,6 +21,21 @@ const DIMENSIONS = [
 
 const view = document.getElementById("view");
 
+// Jeton de rendu : chaque navigation incrémente ce compteur. Les vues
+// asynchrones (dashboard, fiche projet) capturent le jeton courant avant leur
+// appel API et vérifient, une fois la réponse reçue, qu'une autre vue n'a pas
+// été demandée entre-temps. Sans ce garde-fou, une réponse API lente (cold
+// start Azure) écrase la vue affichée par l'utilisateur (BIZ-53).
+let activeRender = 0;
+
+function beginRender() {
+  return ++activeRender;
+}
+
+function isStaleRender(token) {
+  return token !== activeRender;
+}
+
 // -------- Utilitaires API --------
 async function api(method, path, body) {
   const opts = { method, headers: {} };
@@ -97,15 +112,19 @@ function el(html) {
 
 // -------- Vue : tableau de bord --------
 async function renderDashboard(direction = "") {
+  const token = beginRender();
   spinner();
   let projects;
   try {
     const q = direction ? `?direction=${encodeURIComponent(direction)}` : "";
     projects = await api("GET", `${q}`);
   } catch (e) {
+    if (isStaleRender(token)) return;
     toast(e.message, true);
     projects = [];
   }
+  // Une autre vue a été demandée pendant l'appel API : ne pas l'écraser.
+  if (isStaleRender(token)) return;
 
   const tpl = document.getElementById("tpl-dashboard").content.cloneNode(true);
   const select = tpl.getElementById("filter-direction");
@@ -174,6 +193,9 @@ function escapeHtml(str) {
 
 // -------- Vue : assistant de création --------
 function renderWizard() {
+  // Invalide tout rendu asynchrone en cours (dashboard/fiche) afin qu'une
+  // réponse API tardive n'écrase pas l'assistant (BIZ-53).
+  beginRender();
   const state = {
     project: null,
     financials: null,
@@ -535,17 +557,21 @@ function applyFieldErrors(fields, errors) {
 
 // -------- Vue : fiche projet --------
 async function renderDetail(projectId) {
+  const token = beginRender();
   spinner();
   let project, score, bp, financials;
   try {
     project = await api("GET", `/${projectId}`);
   } catch (e) {
+    if (isStaleRender(token)) return;
     toast(e.message, true);
     return renderDashboard();
   }
   score = await api("GET", `/${projectId}/score`).catch(() => null);
   bp = await api("GET", `/${projectId}/bp`).catch(() => null);
   financials = await api("GET", `/${projectId}/financials`).catch(() => null);
+  // Une autre vue a été demandée pendant les appels API : ne pas l'écraser.
+  if (isStaleRender(token)) return;
 
   let html = `
     <button class="back" data-nav="dashboard">‹ Tableau de bord</button>
