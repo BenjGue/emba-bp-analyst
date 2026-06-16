@@ -84,3 +84,104 @@ def test_complete_json_mode_ajoute_response_format() -> None:
     client = FoundryClient(_settings(), transport=httpx.MockTransport(handler))
     client.complete(system="sys", user="usr", json_mode=True)
     assert captured["response_format"] == {"type": "json_object"}
+
+
+def test_complete_utilise_max_completion_tokens_par_defaut() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        captured.update(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}})
+
+    client = FoundryClient(_settings(), transport=httpx.MockTransport(handler))
+    client.complete(system="sys", user="usr")
+    assert "max_completion_tokens" in captured
+    assert "max_tokens" not in captured
+
+
+def test_complete_param_legacy_max_tokens() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        captured.update(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}})
+
+    settings = Settings(
+        ai_enabled=True,
+        ai_endpoint="https://exemple.cognitiveservices.azure.com",
+        ai_deployment="mon-modele",
+        ai_api_key="cle-de-test",
+        ai_use_max_completion_tokens=False,
+    )
+    client = FoundryClient(settings, transport=httpx.MockTransport(handler))
+    client.complete(system="sys", user="usr")
+    assert "max_tokens" in captured
+    assert "max_completion_tokens" not in captured
+
+
+def test_api_key_prioritaire_envoie_header_api_key() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["api-key"] = request.headers.get("api-key", "")
+        captured["authorization"] = request.headers.get("authorization", "")
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}})
+
+    client = FoundryClient(_settings(), transport=httpx.MockTransport(handler))
+    client.complete(system="sys", user="usr")
+    assert captured["api-key"] == "cle-de-test"
+    assert captured["authorization"] == ""
+
+
+def test_entra_id_envoie_bearer_token() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["authorization"] = request.headers.get("authorization", "")
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}})
+
+    settings = Settings(
+        ai_enabled=True,
+        ai_endpoint="https://exemple.cognitiveservices.azure.com",
+        ai_deployment="mon-modele",
+        ai_api_key="",
+        ai_use_entra_id=True,
+    )
+    client = FoundryClient(settings, transport=httpx.MockTransport(handler))
+    # Évite tout appel réseau Azure : on injecte un faux credential.
+    client._credential = _FakeCredential("jeton-test")
+    client.complete(system="sys", user="usr")
+    assert captured["authorization"] == "Bearer jeton-test"
+
+
+def test_config_sans_cle_ni_entra_id_leve_erreur() -> None:
+    settings = Settings(
+        ai_enabled=True,
+        ai_endpoint="https://exemple.cognitiveservices.azure.com",
+        ai_deployment="mon-modele",
+        ai_api_key="",
+        ai_use_entra_id=False,
+    )
+    with pytest.raises(AiConfigError):
+        FoundryClient(settings)
+
+
+class _FakeToken:
+    """Jeton factice exposant l'attribut ``token`` attendu par le client."""
+
+    def __init__(self, value: str) -> None:
+        self.token = value
+
+
+class _FakeCredential:
+    """Credential factice imitant ``DefaultAzureCredential.get_token``."""
+
+    def __init__(self, value: str) -> None:
+        self._value = value
+
+    def get_token(self, *scopes: str) -> _FakeToken:
+        return _FakeToken(self._value)

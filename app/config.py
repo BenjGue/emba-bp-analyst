@@ -29,8 +29,13 @@ class Settings(BaseSettings):
         ai_api_version: Version d'API de l'inférence Azure.
         ai_api_key: Clé d'API du service Foundry. **Jamais en dur** : lue depuis
             l'environnement (dev) ou Key Vault (prod). Vide par défaut.
+        ai_use_entra_id: Authentifie les appels via Entra ID (identité managée)
+            plutôt qu'avec une clé API. Requis lorsque la ressource a
+            ``disableLocalAuth=true`` (aucun secret à stocker).
         ai_timeout_s: Délai maximal (secondes) d'un appel au modèle.
         ai_max_tokens: Plafond de jetons générés par appel.
+        ai_use_max_completion_tokens: Utilise le paramètre ``max_completion_tokens``
+            (modèles GPT-5 et suivants) au lieu de ``max_tokens`` (modèles antérieurs).
     """
 
     model_config = SettingsConfigDict(
@@ -50,8 +55,10 @@ class Settings(BaseSettings):
     ai_deployment: str = ""
     ai_api_version: str = "2024-10-21"
     ai_api_key: str = ""
+    ai_use_entra_id: bool = False
     ai_timeout_s: float = 60.0
     ai_max_tokens: int = 2000
+    ai_use_max_completion_tokens: bool = True
 
 
 @lru_cache

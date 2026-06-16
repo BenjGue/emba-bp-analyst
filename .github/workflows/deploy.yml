@@ -59,7 +59,14 @@ jobs:
             --name bizplan-api-dev \
             --resource-group rg-bizplan-dev \
             --image acrbizplandev.azurecr.io/bizplan-api:${{ github.sha }} \
-            --set-env-vars "DATABASE_URL=secretref:database-url"
+            --set-env-vars \
+              "DATABASE_URL=secretref:database-url" \
+              "AI_ENABLED=true" \
+              "AI_ENDPOINT=https://benjgue-azure-openai.openai.azure.com" \
+              "AI_DEPLOYMENT=gpt-5.4-mini" \
+              "AI_API_VERSION=2024-10-21" \
+              "AI_USE_ENTRA_ID=true" \
+              "AI_USE_MAX_COMPLETION_TOKENS=true"
 
       - name: Vérifier la santé de l'app
         run: |
