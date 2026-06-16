@@ -40,6 +40,36 @@ class DescriptionDraftResponse(BaseModel):
     description: str = Field(description="Description rédigée par l'IA.")
 
 
+class EvaluateurOutput(BaseModel):
+    """Sortie structurée de l'agent Évaluateur (BIZ-56).
+
+    L'IA propose les 6 notes stratégiques à partir des données du projet. Les
+    notes sont ensuite bornées et validées côté backend (« l'IA propose, le
+    backend valide »).
+
+    Attributes:
+        rentabilite: Note proposée de rentabilité (0-10).
+        alignement: Note proposée d'alignement stratégique (0-10).
+        risque: Note proposée de maîtrise du risque (0-10).
+        impact_operationnel: Note proposée d'impact opérationnel (0-10).
+        impact_social: Note proposée d'impact social/environnemental (0-10).
+        faisabilite: Note proposée de faisabilité technique (0-10).
+        justifications: Justification courte par dimension.
+        synthese: Synthèse globale expliquant la logique d'évaluation.
+    """
+
+    rentabilite: int = Field(default=5, description="Note proposée de rentabilité (0-10).")
+    alignement: int = Field(default=5, description="Note proposée d'alignement (0-10).")
+    risque: int = Field(default=5, description="Note proposée de maîtrise du risque (0-10).")
+    impact_operationnel: int = Field(default=5, description="Note proposée d'impact op. (0-10).")
+    impact_social: int = Field(default=5, description="Note proposée d'impact social (0-10).")
+    faisabilite: int = Field(default=5, description="Note proposée de faisabilité (0-10).")
+    justifications: dict[str, str] = Field(
+        default_factory=dict, description="Justification courte par dimension."
+    )
+    synthese: str = Field(default="", description="Synthèse globale expliquant les notes.")
+
+
 class AnalysteOutput(BaseModel):
     """Sortie structurée de l'agent Analyste (BIZ-15).
 

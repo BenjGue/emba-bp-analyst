@@ -34,6 +34,31 @@ class StrategicDimensions(BaseModel):
     faisabilite: int = Field(ge=0, le=10, description="Faisabilité technique (0-10).")
 
 
+class DimensionsSubmission(StrategicDimensions):
+    """Notes stratégiques soumises avec leur contexte d'audit (BIZ-56).
+
+    Étend les 6 notes par des champs facultatifs tracés pour l'audit : la
+    justification d'une éventuelle modification manuelle des notes proposées par
+    l'IA, et la synthèse de la logique de l'IA ayant produit la proposition.
+
+    Attributes:
+        justification: Justification d'une modification manuelle (facultatif).
+        ai_synthese: Synthèse de la logique de l'IA conservée pour l'audit
+            (facultatif).
+    """
+
+    justification: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Justification d'une modification manuelle des notes proposées.",
+    )
+    ai_synthese: str | None = Field(
+        default=None,
+        max_length=4000,
+        description="Synthèse de la logique IA ayant proposé les notes (audit).",
+    )
+
+
 class DimensionDetail(BaseModel):
     """Détail de la contribution d'une dimension au score global.
 
@@ -60,3 +85,25 @@ class ScoreResponse(BaseModel):
     dimensions: dict[str, DimensionDetail] = Field(
         description="Détail de la contribution de chaque dimension."
     )
+
+
+class DimensionSuggestion(BaseModel):
+    """Proposition de notes stratégiques calculée par l'IA (BIZ-56).
+
+    L'IA déduit les 6 notes à partir des données du projet (partie A), les
+    justifie et fournit une synthèse de sa logique. Le score est ensuite calculé
+    de façon déterministe par le backend à partir des notes proposées.
+
+    Attributes:
+        dimensions: Notes proposées par l'IA (entiers 0-10, validés).
+        justifications: Justification courte par dimension.
+        synthese: Synthèse globale expliquant la logique d'évaluation.
+        score: Score déterministe calculé à partir des notes proposées.
+    """
+
+    dimensions: StrategicDimensions = Field(description="Notes proposées par l'IA (0-10).")
+    justifications: dict[str, str] = Field(
+        default_factory=dict, description="Justification par dimension."
+    )
+    synthese: str = Field(default="", description="Synthèse expliquant les notes.")
+    score: ScoreResponse = Field(description="Score déterministe issu des notes proposées.")

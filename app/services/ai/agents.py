@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.schemas.ai import (
     AnalysteOutput,
+    EvaluateurOutput,
     FinancierOutput,
     RedacteurOutput,
     SyntheseOutput,
@@ -23,6 +24,7 @@ from app.services.ai.client import AiClient
 from app.services.ai.errors import AiResponseError
 from app.services.ai.prompts import (
     ANALYSTE_SYSTEM,
+    EVALUATEUR_SYSTEM,
     FINANCIER_SYSTEM,
     REDACTEUR_SYSTEM,
     SYNTHESE_SYSTEM,
@@ -98,6 +100,46 @@ def run_analyste(
     )
     completion = client.complete(system=ANALYSTE_SYSTEM, user=user, json_mode=True)
     return _parse(completion.text, AnalysteOutput)
+
+
+def run_evaluateur(
+    *,
+    nom: str,
+    description: str,
+    direction: str,
+    duree_estimee_mois: int,
+    financials: dict[str, float] | None,
+    client: AiClient,
+) -> EvaluateurOutput:
+    """Propose les 6 notes stratégiques à partir des données du projet (BIZ-56).
+
+    L'IA déduit les notes des informations saisies en partie A et fournit une
+    justification par dimension ainsi qu'une synthèse globale. Les notes sont
+    validées et bornées ensuite côté backend.
+
+    Args:
+        nom: Nom du projet.
+        description: Description du projet.
+        direction: Direction concernée.
+        duree_estimee_mois: Horizon temporel estimé.
+        financials: Hypothèses financières clés déjà saisies, ou ``None``.
+        client: Client IA injecté.
+
+    Returns:
+        Les notes proposées, leurs justifications et la synthèse.
+
+    Raises:
+        AiResponseError: Si la réponse est non exploitable.
+    """
+    finance_txt = json.dumps(financials, ensure_ascii=False) if financials else "non renseignées"
+    user = (
+        f"Projet : {nom}\nDirection : {direction}\n"
+        f"Durée estimée : {duree_estimee_mois} mois\n"
+        f"Données financières (calculées par le backend) : {finance_txt}\n"
+        f"Description : {description}"
+    )
+    completion = client.complete(system=EVALUATEUR_SYSTEM, user=user, json_mode=True)
+    return _parse(completion.text, EvaluateurOutput)
 
 
 def run_financier(
