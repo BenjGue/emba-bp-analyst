@@ -262,6 +262,10 @@ function renderWizard() {
     project: null,
     financials: null,
     score: null,
+    // Mode de saisie choisi en toute première action du workflow (BIZ-60) :
+    // "manual" (saisie manuelle) ou "import" (import d'un fichier Excel
+    // formaté). Conditionne l'affichage du bloc d'import à l'étape Finances.
+    mode: null,
     // Saisies de l'étape 1 conservées pour la navigation Précédent/Continuer
     // (BIZ-40) : restituées à chaque rendu de l'étape Projet.
     form: {
@@ -295,6 +299,42 @@ function renderWizard() {
       <div class="card">${inner}</div>`;
   }
 
+  // Écran d'accueil de l'assistant : tout premier choix du porteur (BIZ-60).
+  // Soit il saisit les informations à la main, soit il importe un classeur
+  // Excel formaté dont les hypothèses financières seront extraites à l'étape
+  // Finances. Le choix conditionne l'affichage du bloc d'import.
+  function stepChoice() {
+    view.innerHTML = `
+      <button class="back" data-nav="dashboard">‹ Retour au tableau de bord</button>
+      <div class="wizard-head">
+        <h2>Nouveau projet</h2>
+      </div>
+      <p class="muted">Comment souhaitez-vous renseigner ce projet ?</p>
+      <div class="choice-grid">
+        <button type="button" class="choice-card" id="choice-manual">
+          <span class="choice-icon" aria-hidden="true">✍️</span>
+          <span class="choice-title">Saisie manuelle</span>
+          <span class="choice-desc">Renseignez vous-même les informations du projet et ses hypothèses financières.</span>
+        </button>
+        <button type="button" class="choice-card" id="choice-import">
+          <span class="choice-icon" aria-hidden="true">📥</span>
+          <span class="choice-title">Importer un fichier Excel</span>
+          <span class="choice-desc">Partez d'un classeur Excel formaté ; les hypothèses financières seront extraites automatiquement.</span>
+        </button>
+      </div>`;
+
+    document.getElementById("choice-manual").onclick = () => {
+      state.mode = "manual";
+      step = 1;
+      stepProject();
+    };
+    document.getElementById("choice-import").onclick = () => {
+      state.mode = "import";
+      step = 1;
+      stepProject();
+    };
+  }
+
   function stepProject() {
     shell(
       `
@@ -320,6 +360,7 @@ function renderWizard() {
       </div>
       <p class="form-hint"><span class="req" aria-hidden="true">*</span> Champs obligatoires</p>
       <div class="btn-row">
+        <button class="btn btn-ghost" id="back-choice">‹ Changer de mode</button>
         <button class="btn btn-primary" id="next">Continuer ›</button>
       </div>`,
       `<button type="button" class="btn btn-ghost btn-ai" id="ai-reformat"
@@ -342,6 +383,12 @@ function renderWizard() {
     for (const id of ["f-nom", "f-desc", "f-dir", "f-duree"]) {
       document.getElementById(id).addEventListener("input", captureForm);
     }
+
+    // Retour à l'écran de choix du mode (BIZ-60), en conservant les saisies.
+    document.getElementById("back-choice").onclick = () => {
+      captureForm();
+      stepChoice();
+    };
 
     // Bouton IA (en haut à droite du titre) : reformate tout le champ
     // description en place à partir de son contenu actuel (BIZ-55).
@@ -416,8 +463,11 @@ function renderWizard() {
   }
 
   function stepFinancials() {
-    shell(`
-      <p class="muted">Hypothèses financières du projet.</p>
+    // Le bloc d'import Excel n'est proposé que si le porteur a choisi le mode
+    // « Importer un fichier Excel » à l'écran d'accueil (BIZ-60).
+    const importBlock =
+      state.mode === "import"
+        ? `
       <div class="ai-assist">
         <label class="field">Importer un fichier Excel (.xlsx)
           <input id="f-xlsx" type="file" accept=".xlsx,.xlsm" />
@@ -427,7 +477,11 @@ function renderWizard() {
         <button type="button" class="btn btn-ghost" id="xlsx-import-detailed">📊 Importer un tableau détaillé</button>
         <small class="form-hint">Format détaillé (cf. spécification) : le temps en lignes (semaines/mois/années) et les catégories en colonnes — dépenses, recettes, agrégats. Les hypothèses sont dérivées automatiquement.</small>
         <div id="statement-preview"></div>
-      </div>
+      </div>`
+        : "";
+    shell(`
+      <p class="muted">Hypothèses financières du projet.</p>
+      ${importBlock}
       <div class="grid-2">
         <label class="field">Investissement initial (€)
           <input id="f-inv" type="number" min="0" value="100000" />
@@ -448,7 +502,9 @@ function renderWizard() {
       </div>`);
 
     document.getElementById("prev").onclick = stepProject;
-    document.getElementById("xlsx-import").onclick = async () => {
+    const importBtn = document.getElementById("xlsx-import");
+    if (importBtn)
+      importBtn.onclick = async () => {
       const input = document.getElementById("f-xlsx");
       const file = input.files && input.files[0];
       if (!file) {
@@ -490,7 +546,9 @@ function renderWizard() {
         btn.textContent = label;
       }
     };
-    document.getElementById("xlsx-import-detailed").onclick = async () => {
+    const detailedBtn = document.getElementById("xlsx-import-detailed");
+    if (detailedBtn)
+      detailedBtn.onclick = async () => {
       const input = document.getElementById("f-xlsx");
       const file = input.files && input.files[0];
       if (!file) {
@@ -712,7 +770,7 @@ function renderWizard() {
     };
   }
 
-  stepProject();
+  stepChoice();
 }
 
 function val(id) {

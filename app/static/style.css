@@ -329,6 +329,52 @@ label.field {
   border-color: var(--vert);
 }
 
+/* Écran de choix du mode de saisie, première action du wizard (BIZ-60). */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-align: left;
+  padding: 1.4rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--gris-bord);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.choice-card:hover,
+.choice-card:focus-visible {
+  border-color: var(--bleu);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.choice-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.choice-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--noir, #1a1a1a);
+}
+
+.choice-desc {
+  font-size: 0.85rem;
+  color: var(--gris-txt);
+}
+
 /* ---------- Tableau de bord ---------- */
 .project-row {
   display: grid;

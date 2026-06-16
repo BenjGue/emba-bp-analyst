@@ -48,6 +48,8 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
   test("validation : soumission formulaire vide affiche des erreurs", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
+    // Première action : choix du mode de saisie (BIZ-60).
+    await page.locator("#choice-manual").click();
     await expect(page.locator("#f-nom")).toBeVisible();
     // On vide les champs et on tente de continuer.
     await page.locator("#f-nom").fill("");
@@ -62,6 +64,7 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
   test("validation : message d'erreur disparaît après correction", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
+    await page.locator("#choice-manual").click();
     await page.locator("#f-nom").fill("");
     await page.locator("#next").click();
     await expect(page.locator("#err-nom")).toBeVisible();
@@ -77,6 +80,7 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
     const nom = `E2E Back ${Date.now()}`;
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
+    await page.locator("#choice-manual").click();
     await page.locator("#f-nom").fill(nom);
     await page.locator("#f-desc").fill("Description de test navigation arrière du wizard.");
     await page.locator("#f-duree").fill("24");
@@ -94,6 +98,7 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
   test("assistance IA : reformater sans description affiche un toast d'erreur", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
+    await page.locator("#choice-manual").click();
     // Le champ description est vide -> le bouton de reformatage refuse et avertit.
     await page.locator("#ai-reformat").click();
     await expect(page.locator("#toast")).toBeVisible();
@@ -103,6 +108,7 @@ test.describe("Exploratoire UI BizPlan-IA", () => {
   test("assistance IA : échec backend géré proprement (pas de crash)", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
+    await page.locator("#choice-manual").click();
     await page.locator("#f-desc").fill("casiers connectés bureau de poste, livraison J+1");
     await page.locator("#ai-reformat").click();
     // L'IA est désactivée côté serveur -> toast d'erreur attendu, l'app reste utilisable.
