@@ -8,13 +8,14 @@ endpoint) sans toucher au code.
 Principe directeur (docs/architecture.md) : « l'IA rédige et raisonne, le backend
 valide et calcule ». Ce module n'effectue aucun calcul métier ; il se contente de
 transmettre un prompt et de restituer le texte produit, en traçant la
-consommation de jetons (docs/pricing.md). Le client est synchrone pour rester
+consommation de jetons. Le client est synchrone pour rester
 cohérent avec le reste de l'application (sessions et routes synchrones).
 """
 
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -24,6 +25,23 @@ from app.config import Settings, get_settings
 from app.services.ai.errors import AiConfigError, AiResponseError
 
 logger = logging.getLogger("bizplan.ai")
+
+# Scope OAuth des services cognitifs Azure (auth Entra ID / identité managée).
+_COGNITIVE_SCOPE = "https://cognitiveservices.azure.com/.default"
+
+
+class _AccessToken(Protocol):
+    """Jeton d'accès minimal exposé par ``azure-identity``."""
+
+    token: str
+
+
+class _TokenCredential(Protocol):
+    """Contrat minimal d'un credential ``azure-identity``."""
+
+    def get_token(self, *scopes: str) -> _AccessToken:
+        """Retourne un jeton d'accès pour les scopes demandés."""
+        ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,15 +99,23 @@ class FoundryClient:
             transport: Transport httpx optionnel (injecté en test).
 
         Raises:
-            AiConfigError: Si l'endpoint, le déploiement ou la clé manquent.
+            AiConfigError: Si l'endpoint, le déploiement ou le moyen
+                d'authentification (clé API ou Entra ID) manquent.
         """
-        if not settings.ai_endpoint or not settings.ai_deployment or not settings.ai_api_key:
+        if not settings.ai_endpoint or not settings.ai_deployment:
             raise AiConfigError(
-                "Configuration IA incomplète : ai_endpoint, ai_deployment et "
-                "ai_api_key sont requis lorsque ai_enabled est actif."
+                "Configuration IA incomplète : ai_endpoint et ai_deployment "
+                "sont requis lorsque ai_enabled est actif."
+            )
+        if not settings.ai_api_key and not settings.ai_use_entra_id:
+            raise AiConfigError(
+                "Configuration IA incomplète : fournir ai_api_key ou activer "
+                "ai_use_entra_id (authentification par identité managée)."
             )
         self.settings = settings
         self._transport = transport
+        self._credential_lock = threading.Lock()
+        self._credential: _TokenCredential | None = None
 
     @property
     def _url(self) -> str:
@@ -98,6 +124,50 @@ class FoundryClient:
         deployment = self.settings.ai_deployment
         version = self.settings.ai_api_version
         return f"{base}/openai/deployments/{deployment}/chat/completions?api-version={version}"
+
+    def _auth_headers(self) -> dict[str, str]:
+        """Construit l'en-tête d'authentification selon le mode configuré.
+
+        Privilégie la clé API si elle est fournie (dev/test) ; sinon utilise un
+        jeton Entra ID obtenu via l'identité managée (aucun secret stocké).
+
+        Returns:
+            Les en-têtes d'authentification à ajouter à la requête.
+
+        Raises:
+            AiConfigError: Si l'obtention du jeton Entra ID échoue.
+        """
+        if self.settings.ai_api_key:
+            return {"api-key": self.settings.ai_api_key}
+        return {"Authorization": f"Bearer {self._entra_token()}"}
+
+    def _entra_token(self) -> str:
+        """Obtient un jeton d'accès Entra ID pour les services cognitifs.
+
+        Le credential ``azure-identity`` met les jetons en cache et les
+        rafraîchit automatiquement ; il est créé une seule fois (paresseux).
+
+        Returns:
+            Le jeton d'accès OAuth.
+
+        Raises:
+            AiConfigError: Si ``azure-identity`` est absent ou si l'acquisition
+                du jeton échoue.
+        """
+        if self._credential is None:
+            with self._credential_lock:
+                if self._credential is None:
+                    try:
+                        from azure.identity import DefaultAzureCredential
+                    except ImportError as exc:  # pragma: no cover - dépendance prod
+                        raise AiConfigError(
+                            "azure-identity est requis pour l'authentification Entra ID."
+                        ) from exc
+                    self._credential = DefaultAzureCredential()
+        try:
+            return self._credential.get_token(_COGNITIVE_SCOPE).token
+        except Exception as exc:  # pragma: no cover - dépend de l'environnement Azure
+            raise AiConfigError(f"Échec d'obtention du jeton Entra ID : {exc}") from exc
 
     def complete(
         self,
@@ -122,21 +192,22 @@ class FoundryClient:
             AiResponseError: Si la réponse HTTP est en erreur ou si le contenu
                 généré est absent.
         """
+        token_limit = max_tokens or self.settings.ai_max_tokens
+        token_param = (
+            "max_completion_tokens" if self.settings.ai_use_max_completion_tokens else "max_tokens"
+        )
         payload: dict[str, object] = {
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-            "max_tokens": max_tokens or self.settings.ai_max_tokens,
+            token_param: token_limit,
             "temperature": 0.4,
         }
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
 
-        headers = {
-            "api-key": self.settings.ai_api_key,
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json", **self._auth_headers()}
 
         try:
             with httpx.Client(
@@ -159,7 +230,7 @@ class FoundryClient:
         if not text:
             raise AiResponseError("Le modèle IA a renvoyé un contenu vide.")
 
-        # Traçabilité du coût (docs/pricing.md) : ne jamais logguer le contenu.
+        # Traçabilité du coût : ne jamais logguer le contenu.
         logger.info(
             "Appel IA déploiement=%s input_tokens=%d output_tokens=%d",
             self.settings.ai_deployment,
