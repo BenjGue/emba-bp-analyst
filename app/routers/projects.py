@@ -19,7 +19,12 @@ from app.schemas.financial import (
     FinancialAssumptionCreate,
     FinancialAssumptionResponse,
 )
-from app.schemas.imports import FinancialImportMetadata, FinancialImportResult
+from app.schemas.imports import (
+    FinancialImportMetadata,
+    FinancialImportResult,
+    FinancialStatementData,
+    FinancialStatementResult,
+)
 from app.schemas.project import (
     ProjectCreate,
     ProjectResponse,
@@ -42,7 +47,10 @@ from app.services.imports import (
     ExcelImportError,
     FileTooLargeError,
     ImportNotFoundError,
+    StatementNotFoundError,
+    get_financial_statement,
     get_import,
+    import_financial_statement,
     import_financials,
 )
 from app.services.projects import (
@@ -406,6 +414,98 @@ def download_financials_import(
         media_type=record.content_type,
         headers={"Content-Disposition": f'attachment; filename="{record.filename}"'},
     )
+
+
+@router.post(
+    "/{project_id}/financials/import-detailed",
+    response_model=FinancialStatementResult,
+    status_code=status.HTTP_201_CREATED,
+    summary="Importer un tableau financier détaillé multi-colonnes",
+)
+async def import_financial_statement_xlsx(
+    project_id: int,
+    file: UploadFile,
+    db: Annotated[Session, Depends(get_db)],
+) -> FinancialStatementResult:
+    """Importe un tableau financier détaillé (temps en lignes, catégories en colonnes) (BIZ-32).
+
+    Le fichier suit le format de la spécification (dépenses, recettes, agrégats
+    en colonnes ; périodes en lignes). Il est validé, parsé de façon
+    déterministe, et les hypothèses financières en sont dérivées puis
+    persistées. Le fichier d'origine et le tableau structuré sont conservés.
+
+    Args:
+        project_id: Identifiant du projet rattaché.
+        file: Fichier Excel (.xlsx/.xlsm) téléversé.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Le tableau détaillé, les hypothèses dérivées et les métadonnées du fichier.
+
+    Raises:
+        HTTPException: 404 si le projet n'existe pas, 413 si le fichier est trop
+            volumineux, 422 si le fichier est invalide ou inexploitable.
+    """
+    content = await file.read()
+    try:
+        statement, _ = import_financial_statement(
+            db,
+            project_id,
+            filename=file.filename or "import.xlsx",
+            content_type=file.content_type or "",
+            content=content,
+        )
+    except ProjectNotFoundError as exc:
+        raise _NOT_FOUND from exc
+    except FileTooLargeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Le fichier dépasse la taille maximale autorisée (2 Mio).",
+        ) from exc
+    except ExcelImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+
+    return FinancialStatementResult(
+        statement=FinancialStatementData.model_validate(statement),
+        financials=FinancialAssumptionResponse.model_validate(
+            statement.project.financial_assumption
+        ),
+        import_file=FinancialImportMetadata.model_validate(statement.project.financial_import),
+    )
+
+
+@router.get(
+    "/{project_id}/financials/statement",
+    response_model=FinancialStatementData,
+    summary="Consulter le tableau financier détaillé importé",
+)
+def read_financial_statement(
+    project_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> FinancialStatementData:
+    """Retourne le tableau financier détaillé importé pour un projet (BIZ-32).
+
+    Args:
+        project_id: Identifiant du projet rattaché.
+        db: Session de base de données injectée par FastAPI.
+
+    Returns:
+        Le tableau financier détaillé (périodes, dépenses, recettes, agrégats).
+
+    Raises:
+        HTTPException: 404 si le projet ou le tableau n'existe pas.
+    """
+    try:
+        statement = get_financial_statement(db, project_id)
+    except (ProjectNotFoundError, StatementNotFoundError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucun tableau financier détaillé importé pour ce projet",
+        ) from exc
+    return FinancialStatementData.model_validate(statement)
 
 
 @router.put(

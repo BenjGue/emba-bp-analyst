@@ -191,6 +191,67 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Libellés d'affichage des postes du tableau financier détaillé (BIZ-32).
+const STATEMENT_LABELS = {
+  salaires: "Salaires",
+  achat_materiel: "Achat matériel",
+  achat_logiciel: "Achat logiciel",
+  charges_fiscales: "Charges fiscales",
+  frais_administratifs: "Frais administratifs",
+  frais_bancaires: "Frais bancaires",
+  achats_divers: "Achats divers",
+  autres_depenses: "Autres dépenses",
+  total_depenses: "Total dépenses",
+  nombre_clients: "Nombre de clients",
+  recette_produit_1: "Recette produit/service 1",
+  recette_produit_2: "Recette produit/service 2",
+  recette_produit_3: "Recette produit/service 3",
+  recette_produit_4: "Recette produit/service 4",
+  chiffre_affaires: "Chiffre d'affaires",
+  marge_brute: "Marge brute",
+  ebe: "EBE",
+  resultat_exploitation: "Résultat d'exploitation",
+  ebitda: "EBITDA",
+};
+
+// Restitue le tableau financier détaillé importé dans #statement-preview (BIZ-32).
+function renderStatement(stmt) {
+  const host = document.getElementById("statement-preview");
+  if (!host) return;
+  if (!stmt || !stmt.periods || !stmt.periods.length) {
+    host.innerHTML = "";
+    return;
+  }
+  const fmt = (v) => Number(v).toLocaleString("fr-FR");
+  const headerCells = stmt.periods.map((p) => `<th>${escapeHtml(p)}</th>`).join("");
+  const section = (title, series) => {
+    const keys = Object.keys(series || {});
+    if (!keys.length) return "";
+    const rows = keys
+      .map((key) => {
+        const label = STATEMENT_LABELS[key] || key;
+        const cells = series[key].map((v) => `<td>${fmt(v)}</td>`).join("");
+        return `<tr><th class="row-label">${escapeHtml(label)}</th>${cells}</tr>`;
+      })
+      .join("");
+    return `<tr class="group-row"><th colspan="${stmt.periods.length + 1}">${title}</th></tr>${rows}`;
+  };
+  host.innerHTML = `
+    <div class="statement-wrap">
+      <p class="form-hint">Tableau importé — granularité : ${escapeHtml(stmt.period_unit)}.</p>
+      <div class="table-scroll">
+        <table class="statement-table">
+          <thead><tr><th>Poste</th>${headerCells}</tr></thead>
+          <tbody>
+            ${section("Dépenses", stmt.depenses)}
+            ${section("Recettes", stmt.recettes)}
+            ${section("Agrégats", stmt.agregats)}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
 // -------- Vue : assistant de création --------
 function renderWizard() {
   // Invalide tout rendu asynchrone en cours (dashboard/fiche) afin qu'une
@@ -363,6 +424,9 @@ function renderWizard() {
         </label>
         <button type="button" class="btn btn-ghost" id="xlsx-import">⬆️ Importer depuis Excel</button>
         <small class="form-hint">Le fichier doit contenir les lignes : investissement initial, revenus annuels, coûts annuels, délai de rentabilité. Les colonnes pluriannuelles sont moyennées.</small>
+        <button type="button" class="btn btn-ghost" id="xlsx-import-detailed">📊 Importer un tableau détaillé</button>
+        <small class="form-hint">Format détaillé (cf. spécification) : le temps en lignes (semaines/mois/années) et les catégories en colonnes — dépenses, recettes, agrégats. Les hypothèses sont dérivées automatiquement.</small>
+        <div id="statement-preview"></div>
       </div>
       <div class="grid-2">
         <label class="field">Investissement initial (€)
@@ -419,6 +483,49 @@ function renderWizard() {
         document.getElementById("f-cout").value = f.couts_annuels;
         document.getElementById("f-delai").value = f.delai_rentabilite_mois;
         toast("Données importées — vérifiez les valeurs avant de continuer.");
+      } catch (e) {
+        toast(e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    };
+    document.getElementById("xlsx-import-detailed").onclick = async () => {
+      const input = document.getElementById("f-xlsx");
+      const file = input.files && input.files[0];
+      if (!file) {
+        toast("Sélectionnez d'abord un fichier Excel.", true);
+        return;
+      }
+      const btn = document.getElementById("xlsx-import-detailed");
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = "⏳ Import en cours…";
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`/projects/${state.project.id}/financials/import-detailed`, {
+          method: "POST",
+          body: form,
+        });
+        if (!res.ok) {
+          let detail = `Erreur ${res.status}`;
+          try {
+            const data = await res.json();
+            if (data.detail) detail = data.detail;
+          } catch (_) {
+            /* corps non JSON */
+          }
+          throw new Error(detail);
+        }
+        const data = await res.json();
+        const f = data.financials;
+        document.getElementById("f-inv").value = f.investissement_initial;
+        document.getElementById("f-rev").value = f.revenus_annuels;
+        document.getElementById("f-cout").value = f.couts_annuels;
+        document.getElementById("f-delai").value = f.delai_rentabilite_mois;
+        renderStatement(data.statement);
+        toast("Tableau détaillé importé — hypothèses dérivées, vérifiez les valeurs.");
       } catch (e) {
         toast(e.message, true);
       } finally {

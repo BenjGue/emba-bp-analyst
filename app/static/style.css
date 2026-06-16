@@ -572,3 +572,45 @@ label.field {
     position: static;
   }
 }
+
+/* Tableau financier détaillé importé (BIZ-32) */
+.statement-wrap {
+  margin-top: 12px;
+}
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--gris-bord);
+  border-radius: var(--radius);
+}
+.statement-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+.statement-table th,
+.statement-table td {
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--gris-bord);
+}
+.statement-table thead th {
+  background: var(--gris-bg);
+  text-align: right;
+  position: sticky;
+  top: 0;
+}
+.statement-table thead th:first-child,
+.statement-table .row-label {
+  text-align: left;
+}
+.statement-table .group-row th {
+  background: var(--bleu);
+  color: #fff;
+  text-align: left;
+  font-weight: 600;
+}
+.statement-table .row-label {
+  font-weight: 500;
+  color: var(--gris-txt);
+}
