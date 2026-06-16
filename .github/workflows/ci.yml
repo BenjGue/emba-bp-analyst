@@ -43,6 +43,25 @@ jobs:
           files: coverage.xml
         continue-on-error: true
 
+  secret-scan:
+    name: Détection de secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Installer detect-secrets
+        run: pip install "detect-secrets==1.5.0"
+
+      - name: Vérifier l'absence de nouveaux secrets
+        run: |
+          git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
+
   build-image:
     name: Build Docker image
     needs: quality
