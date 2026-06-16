@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 import httpx
 
@@ -154,18 +154,21 @@ class FoundryClient:
             AiConfigError: Si ``azure-identity`` est absent ou si l'acquisition
                 du jeton échoue.
         """
-        if self._credential is None:
+        credential = self._credential
+        if credential is None:
             with self._credential_lock:
-                if self._credential is None:
+                credential = self._credential
+                if credential is None:
                     try:
                         from azure.identity import DefaultAzureCredential
                     except ImportError as exc:  # pragma: no cover - dépendance prod
                         raise AiConfigError(
                             "azure-identity est requis pour l'authentification Entra ID."
                         ) from exc
-                    self._credential = DefaultAzureCredential()
+                    credential = cast(_TokenCredential, DefaultAzureCredential())
+                    self._credential = credential
         try:
-            return self._credential.get_token(_COGNITIVE_SCOPE).token
+            return credential.get_token(_COGNITIVE_SCOPE).token
         except Exception as exc:  # pragma: no cover - dépend de l'environnement Azure
             raise AiConfigError(f"Échec d'obtention du jeton Entra ID : {exc}") from exc
 
