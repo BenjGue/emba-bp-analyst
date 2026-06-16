@@ -3,13 +3,11 @@ name: Security to JIRA
 # Fait remonter automatiquement les alertes GitHub Advanced Security (GHAS)
 # dans JIRA, sur le modèle de l'automatisation E2E (BIZ-39, BIZ-44).
 #   - planifié chaque jour ;
-#   - déclenchable manuellement ;
-#   - rejoué dès qu'une nouvelle alerte de code scanning apparaît.
+#   - déclenchable manuellement.
 on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
-  code_scanning_alert:
 
 permissions:
   contents: read
