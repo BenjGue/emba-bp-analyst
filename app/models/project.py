@@ -37,6 +37,7 @@ class Project(Base):
         business_plan: Business plan généré (0 ou 1).
         scenarios: Scénarios financiers générés.
         financial_import: Fichier Excel financier importé (0 ou 1).
+        financial_statement: Tableau financier multi-colonnes importé (0 ou 1).
     """
 
     __tablename__ = "projects"
@@ -73,6 +74,11 @@ class Project(Base):
         cascade="all, delete-orphan",
     )
     financial_import: Mapped[FinancialImport | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    financial_statement: Mapped[FinancialStatement | None] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         uselist=False,
@@ -240,3 +246,38 @@ class FinancialImport(Base):
     uploaded_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     project: Mapped[Project] = relationship(back_populates="financial_import")
+
+
+class FinancialStatement(Base):
+    """Tableau financier multi-colonnes importé depuis Excel (BIZ-32).
+
+    Matérialise le format détaillé décrit dans la spécification (Projet2.docx) :
+    le temps en lignes (semaines/mois/années) et les catégories en colonnes
+    (dépenses, recettes, agrégats). Les séries chronologiques sont conservées
+    telles quelles ; les hypothèses financières scalaires du projet en sont
+    dérivées de façon déterministe.
+
+    Attributes:
+        id: Identifiant technique.
+        project_id: Projet rattaché (unique : le dernier import remplace le précédent).
+        period_unit: Granularité temporelle détectée (``semaine`` / ``mois`` / ``annee``).
+        periods: Libellés des périodes (axe temporel), dans l'ordre.
+        depenses: Séries de dépenses par poste (clé canonique -> valeurs par période).
+        recettes: Séries de recettes par poste.
+        agregats: Séries d'agrégats (marge brute, EBE, résultat d'exploitation, EBITDA).
+        created_at: Horodatage de l'import (UTC).
+        project: Projet associé.
+    """
+
+    __tablename__ = "financial_statements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    period_unit: Mapped[str] = mapped_column(String(20))
+    periods: Mapped[list[Any]] = mapped_column(JSON)
+    depenses: Mapped[dict[str, Any]] = mapped_column(JSON)
+    recettes: Mapped[dict[str, Any]] = mapped_column(JSON)
+    agregats: Mapped[dict[str, Any]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    project: Mapped[Project] = relationship(back_populates="financial_statement")

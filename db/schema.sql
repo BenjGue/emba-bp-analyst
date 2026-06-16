@@ -92,4 +92,19 @@ CREATE TABLE IF NOT EXISTS financial_imports (
         REFERENCES projects (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- BIZ-32 : tableau financier détaillé (temps en lignes, catégories en colonnes).
+CREATE TABLE IF NOT EXISTS financial_statements (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    project_id   INT          NOT NULL,
+    period_unit  VARCHAR(20)  NOT NULL,
+    periods      JSON         NOT NULL,
+    depenses     JSON         NOT NULL,
+    recettes     JSON         NOT NULL,
+    agregats     JSON         NOT NULL,
+    created_at   DATETIME     NOT NULL,
+    UNIQUE KEY uq_statement_project (project_id),
+    CONSTRAINT fk_statement_project FOREIGN KEY (project_id)
+        REFERENCES projects (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;
