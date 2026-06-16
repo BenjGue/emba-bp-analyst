@@ -21,6 +21,12 @@ test.describe("Parcours critique BizPlan-IA", () => {
     await page.goto("/");
     await page.locator('[data-nav="wizard"]').first().click();
 
+    // 1bis. Première action du wizard : choix du mode de saisie (BIZ-60).
+    // On choisit l'import Excel pour valider la présence de l'affordance.
+    await expect(page.locator("#choice-manual")).toBeVisible();
+    await expect(page.locator("#choice-import")).toBeVisible();
+    await page.locator("#choice-import").click();
+
     // 2. Étape projet.
     await expect(page.locator("#f-nom")).toBeVisible();
     await page.locator("#f-nom").fill(nomProjet);
@@ -68,5 +74,34 @@ test.describe("Parcours critique BizPlan-IA", () => {
     await expect(pdfLink).toBeVisible();
     const href = await pdfLink.getAttribute("href");
     expect(href).toContain("/export?format=pdf");
+  });
+
+  test("choix du mode : saisie manuelle masque l'import, import l'affiche", async ({
+    page,
+  }) => {
+    // Vérifie que le choix import/manuel est bien la première action du
+    // wizard et qu'il conditionne l'affichage du bloc d'import Excel (BIZ-60).
+    await page.goto("/");
+    await page.locator('[data-nav="wizard"]').first().click();
+
+    // Mode « Saisie manuelle » : pas de bloc d'import à l'étape Finances.
+    await page.locator("#choice-manual").click();
+    await expect(page.locator("#f-nom")).toBeVisible();
+    await page.locator("#f-nom").fill(`E2E Manuel ${Date.now()}`);
+    await page
+      .locator("#f-desc")
+      .fill("Projet de test vérifiant le mode de saisie manuelle.");
+    await page.locator("#f-duree").fill("12");
+    await page.locator("#next").click();
+    await expect(page.locator("#f-inv")).toBeVisible();
+    await expect(page.locator("#xlsx-import")).toHaveCount(0);
+
+    // Retour à l'écran de choix puis bascule en mode « Import Excel ».
+    await page.locator("#prev").click();
+    await expect(page.locator("#back-choice")).toBeVisible();
+    await page.locator("#back-choice").click();
+    await page.locator("#choice-import").click();
+    await page.locator("#next").click();
+    await expect(page.locator("#xlsx-import")).toBeVisible();
   });
 });
