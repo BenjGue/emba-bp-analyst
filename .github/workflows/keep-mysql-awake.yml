@@ -1,13 +1,15 @@
 name: Keep MySQL awake
 
-# Le serveur Azure Database for MySQL Flexible (tier Burstable) s'arrête
-# automatiquement après ~7 jours d'inactivité. Un arrêt provoque l'échec au
-# démarrage du backend et l'indisponibilité du site (BIZ-49). Ce workflow le
-# réveille quotidiennement s'il est arrêté.
+# Le serveur Azure Database for MySQL Flexible (tier Burstable) peut se
+# retrouver à l'état Stopped. Un arrêt provoque l'échec au démarrage du backend
+# et l'indisponibilité du site (BIZ-49). Une cadence quotidienne laissait le
+# serveur arrêté plusieurs heures (retard des schedules GitHub) ; on resserre
+# donc à toutes les 2 heures pour garantir une disponibilité quasi permanente
+# (BIZ-84).
 
 on:
   schedule:
-    - cron: "0 5 * * *" # tous les jours à 05:00 UTC
+    - cron: "0 */2 * * *" # toutes les 2 heures
   workflow_dispatch: {}
 
 permissions:
@@ -38,12 +40,28 @@ jobs:
             --resource-group rg-bizplan-dev \
             --query state -o tsv)
           echo "État actuel : $state"
-          if [ "$state" != "Ready" ]; then
-            echo "Serveur non prêt — démarrage en cours…"
-            az mysql flexible-server start \
-              --name bizplan-mysql-dev \
-              --resource-group rg-bizplan-dev
-            echo "Serveur démarré."
-          else
+          if [ "$state" = "Ready" ]; then
             echo "Serveur déjà prêt — rien à faire."
+            exit 0
           fi
+          echo "Serveur non prêt — démarrage en cours…"
+          az mysql flexible-server start \
+            --name bizplan-mysql-dev \
+            --resource-group rg-bizplan-dev
+          # Attendre que le serveur atteigne effectivement l'état Ready avant de
+          # rendre la main, sinon une requête arrivant pendant le démarrage
+          # échouerait encore (BIZ-84).
+          for i in $(seq 1 30); do
+            state=$(az mysql flexible-server show \
+              --name bizplan-mysql-dev \
+              --resource-group rg-bizplan-dev \
+              --query state -o tsv)
+            echo "  tentative $i/30 — état : $state"
+            if [ "$state" = "Ready" ]; then
+              echo "Serveur démarré et prêt."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Le serveur n'a pas atteint l'état Ready dans le temps imparti."
+          exit 1
