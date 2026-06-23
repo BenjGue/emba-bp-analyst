@@ -37,7 +37,7 @@ Un **démonstrateur web** où :
 
 1. Le porteur de projet **saisit les informations clés** (formulaire).
 2. L'outil **calcule automatiquement un score de pertinence** sur 6 dimensions.
-3. Une **architecture d'agents IA (Claude)** génère un **business plan complet en 10 sections**.
+3. Une **architecture multi-agents** (orchestrée côté backend sur **Azure AI Foundry**) génère un **business plan complet en 10 sections**.
 4. L'IA propose **3 scénarios financiers** (bas, médian, haut).
 5. L'IA rédige une **note de synthèse CODIR** d'une page.
 6. Le manager **télécharge / copie** la synthèse et consulte un **tableau de bord** comparatif.
@@ -64,7 +64,7 @@ Score final **0–100**, agrégé sur **6 dimensions pondérées** :
 | **Frontend** | HTML/CSS/JS léger (option Streamlit pour le proto) | Rapide à démontrer, zéro friction |
 | **Backend / API** | Python **FastAPI** | Async, typage Pydantic (validation JSON native), OpenAPI auto |
 | **Base de données** | **MySQL** | Imposé par le cas ; projets/hypothèses/scénarios relationnels |
-| **IA générative** | **Claude (Sonnet 4.6)** via API + **Azure AI Foundry Agents** | Qualité de rédaction, sorties JSON structurées, orchestration multi-agents |
+| **IA générative** | **Azure AI Foundry** (inférence `chat/completions`, modèle **configurable/agnostique** : Claude, GPT…) + orchestration multi-agents **applicative** (backend FastAPI) | Qualité de rédaction, sorties JSON structurées, indépendance vis-à-vis du fournisseur de modèle |
 | **Format d'échange** | **JSON structuré** (entrée/sortie) | Intégration backend, validation systématique |
 | **Hébergement** | **Microsoft Azure** (services managés) | Scalabilité, sécurité, services IA natifs |
 
@@ -75,22 +75,24 @@ L'architecture détaillée (agents spécialisés, services Azure, justification 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌─────────────────────────┐
 │   Frontend   │────▶│  API FastAPI     │────▶│  Orchestrateur d'agents │
-│ (formulaire) │◀────│ (validation JSON)│◀────│   (Azure AI Foundry)    │
+│ (formulaire) │◄────│ (validation JSON)│◄────│  (backend FastAPI)      │
 └──────────────┘     └────────┬─────────┘     └───────────┬─────────────┘
-                              │                            │
+                              │                            │ appels chat/completions
                      ┌────────▼─────────┐    ┌─────────────▼──────────────┐
-                     │   MySQL (Azure)  │    │ Agents spécialisés Claude  │
-                     │ projets, scénarios│   │ • Analyste                 │
-                     │ hypothèses, risques│  │ • Financier (scénarios)    │
-                     └──────────────────┘    │ • Scoring                  │
-                                             │ • Rédacteur BP (10 sec.)   │
-                                             │ • Synthèse CODIR           │
+                     │   MySQL (Azure)  │    │ Azure AI Foundry           │
+                     │ projets, scénarios│   │ (1 déploiement de modèle) │
+                     │ hypothèses, risques│  │ Agents (prompts dédiés) :  │
+                     └─────────────────┘    │ • Analyste                 │
+                                             │ • Évaluateur (notes)       │
+   Le score est calculé de façon             │ • Financier (scénarios)    │
+   100 % déterministe (scoring.py),          │ • Rédacteur BP (10 sec.)   │
+   ce n'est pas un agent IA.                 │ • Synthèse CODIR           │
                                              └────────────────────────────┘
 ```
 
 ## 5. Documentation du projet
 
-Ce README est le point d'entrée. Il pointe vers cinq documents spécialisés :
+Ce README est le point d'entrée. Il pointe vers sept documents spécialisés :
 
 | Document | Contenu |
 |---|---|
