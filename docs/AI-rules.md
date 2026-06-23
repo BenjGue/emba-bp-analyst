@@ -36,7 +36,7 @@ Fichier racine lu automatiquement par Claude à chaque session. Contenu recomman
 
 ## Stack
 - Backend : Python 3.12, FastAPI, Pydantic v2, SQLAlchemy, MySQL.
-- IA produit : SDK Anthropic (Claude Sonnet 4.6), sorties JSON validées.
+- IA produit : Azure AI Foundry (inférence `chat/completions`), modèle configurable, sorties JSON validées.
 - Tests : pytest. Lint/format : Ruff. Types : mypy.
 
 ## Règles NON négociables — pour CHAQUE feature
