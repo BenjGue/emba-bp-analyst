@@ -1,5 +1,16 @@
 # BizPlan-IA — Outil de création automatisée de Business Plan pour La Poste
 
+<!-- Badges de statut : générés à la volée par GitHub Actions / shields.io -->
+[![CI](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/ci.yml)
+[![CodeQL / SAST](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/codeql.yml)
+[![Deploy](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/deploy.yml)
+[![E2E](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/e2e.yml/badge.svg)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/e2e.yml)
+[![Security → JIRA](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/security-to-jira.yml/badge.svg)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/security-to-jira.yml)
+[![Couverture des tests](https://img.shields.io/badge/couverture-96.87%25-brightgreen)](https://github.com/BenjGue/emba-bp-analyst/actions/workflows/ci.yml)
+[![Dernier build](https://img.shields.io/github/last-commit/BenjGue/emba-bp-analyst/main?label=dernier%20build)](https://github.com/BenjGue/emba-bp-analyst/commits/main)
+[![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Ruff](https://img.shields.io/badge/style-ruff-261230?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
+
 > Démonstrateur d'IA générative qui assiste un porteur de projet dans la création d'un **business plan complet, chiffré et argumenté**, et qui produit un **score de pertinence (0–100)** pour aider le comité de direction (CODIR) de La Poste à **prioriser** ses projets.
 
 **Projet 2 — Executive MBA EPITECH (Promotion 2026)**
@@ -84,6 +95,7 @@ Ce README est le point d'entrée. Il pointe vers cinq documents spécialisés :
 | Document | Contenu |
 |---|---|
 | 📐 [`architecture.md`](./docs/architecture.md) | Architecture **agentic**, déploiement **Azure**, services managés, **Azure AI Foundry**, justification des arbitrages |
+| 🗺️ [`diagrammes.md`](./docs/diagrammes.md) | **Diagrammes** Mermaid : infrastructure Azure, workflow métier (génération du BP), workflow de développement (JIRA → prod) |
 | 🛠️ [`craftsmanship.md`](./docs/craftsmanship.md) | Ingénierie logicielle & automatisation : **JIRA**, **VSCode + serveur MCP JIRA**, **GitHub**, **GitHub Actions**, sécurité du code, **GitHub Advanced Security**, pipeline streamliné |
 | 🤖 [`AI-rules.md`](./docs/AI-rules.md) | Setup & fichiers pour **forcer les bonnes pratiques IA** : commentaires, tests unitaires, documentation, branching par feature |
 | 📦 [`livrable.md`](./docs/livrable.md) | **Tous les livrables attendus**, mappés aux critères d'évaluation |
