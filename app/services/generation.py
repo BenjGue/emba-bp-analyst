@@ -53,10 +53,44 @@ _SECTION_TITLES: Final[dict[str, str]] = {
 }
 
 
+def _scenario_payback(
+    delai_rentabilite_mois: int,
+    resultat_median: float,
+    resultat: float,
+    investissement: float,
+) -> float:
+    """Calcule le délai de retour sur investissement d'un scénario (mois).
+
+    Le délai de référence (``delai_rentabilite_mois``) provient des données
+    financières : il est dérivé du profil mensuel réel lors d'un import détaillé
+    (premier mois où la trésorerie cumulée redevient positive) ou saisi
+    directement. Il sert de payback du scénario médian. Les scénarios bas et
+    haut le mettent à l'échelle selon le ratio de résultat net, le délai étant
+    inversement proportionnel au résultat. Un repli analytique annualisé est
+    utilisé si le délai de référence n'est pas exploitable.
+
+    Args:
+        delai_rentabilite_mois: Délai de rentabilité de référence (médian).
+        resultat_median: Résultat net annuel du scénario médian (€).
+        resultat: Résultat net annuel du scénario courant (€).
+        investissement: Investissement initial (€).
+
+    Returns:
+        Le délai de retour (mois), ou ``-1.0`` si le projet n'est jamais rentable.
+    """
+    if resultat <= 0:
+        return -1.0
+    if delai_rentabilite_mois > 0 and resultat_median > 0:
+        return round(min(600.0, delai_rentabilite_mois * (resultat_median / resultat)), 1)
+    # Repli analytique annualisé lorsqu'aucun délai de référence n'est exploitable.
+    return round(investissement / resultat * 12, 1) if investissement else -1.0
+
+
 def _build_scenarios(
     investissement: float,
     revenus: float,
     couts: float,
+    delai_rentabilite_mois: int,
 ) -> dict[str, dict[str, float]]:
     """Calcule les scénarios financiers à partir des hypothèses.
 
@@ -64,17 +98,23 @@ def _build_scenarios(
         investissement: Investissement initial (€).
         revenus: Revenus annuels de référence (€).
         couts: Coûts annuels d'exploitation (€).
+        delai_rentabilite_mois: Délai de rentabilité de référence (mois), issu
+            des données financières (import détaillé ou saisie). Sert de payback
+            du scénario médian afin de rester cohérent avec l'horizon réel.
 
     Returns:
         Pour chaque scénario, les revenus, coûts, résultat net annuel, ROI et
         délai de retour sur investissement (mois).
     """
+    resultat_median = round(revenus - couts, 2)
     scenarios: dict[str, dict[str, float]] = {}
     for name, factor in _SCENARIO_FACTORS.items():
         revenus_scenario = round(revenus * factor, 2)
         resultat = round(revenus_scenario - couts, 2)
         roi = round((resultat / investissement * 100) if investissement else 0.0, 2)
-        payback = round(investissement / resultat * 12, 1) if resultat > 0 else -1.0
+        payback = _scenario_payback(
+            delai_rentabilite_mois, resultat_median, resultat, investissement
+        )
         scenarios[name] = {
             "revenus_annuels": revenus_scenario,
             "couts_annuels": round(couts, 2),
@@ -357,6 +397,7 @@ def generate_business_plan(
         financials.investissement_initial,
         financials.revenus_annuels,
         financials.couts_annuels,
+        financials.delai_rentabilite_mois,
     )
     score_total = project.scores[-1].total if project.scores else None
 
