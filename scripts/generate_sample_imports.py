@@ -63,7 +63,10 @@ NOMBRE_CLIENTS = [0, 0, 2, 5, 9, 14, 18, 22, 26, 30, 34, 38]
 RECETTE_P1 = [round(ca * 0.40) for ca in CHIFFRE_AFFAIRES]
 RECETTE_P2 = [round(ca * 0.30) for ca in CHIFFRE_AFFAIRES]
 RECETTE_P3 = [round(ca * 0.20) for ca in CHIFFRE_AFFAIRES]
-RECETTE_P4 = [ca - p1 - p2 - p3 for ca, p1, p2, p3 in zip(CHIFFRE_AFFAIRES, RECETTE_P1, RECETTE_P2, RECETTE_P3, strict=True)]
+RECETTE_P4 = [
+    ca - p1 - p2 - p3
+    for ca, p1, p2, p3 in zip(CHIFFRE_AFFAIRES, RECETTE_P1, RECETTE_P2, RECETTE_P3, strict=True)
+]
 
 # Agrégats mensuels (illustratifs, dérivés du CA et des dépenses).
 MARGE_BRUTE = [round(ca * 0.65) for ca in CHIFFRE_AFFAIRES]
