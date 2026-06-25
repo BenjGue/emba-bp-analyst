@@ -9,21 +9,29 @@ from __future__ import annotations
 from app.models.project import (
     BusinessPlan,
     FinancialAssumption,
+    FinancialHypothesis,
     FinancialImport,
     FinancialStatement,
+    OpportunityType,
     Project,
+    RiskType,
     Scenario,
     Score,
     StrategicAssessment,
+    StrategicParameter,
 )
 
 __all__ = [
     "BusinessPlan",
     "FinancialAssumption",
+    "FinancialHypothesis",
     "FinancialImport",
     "FinancialStatement",
+    "OpportunityType",
     "Project",
+    "RiskType",
     "Scenario",
     "Score",
     "StrategicAssessment",
+    "StrategicParameter",
 ]

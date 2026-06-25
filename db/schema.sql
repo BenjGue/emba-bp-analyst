@@ -107,4 +107,47 @@ CREATE TABLE IF NOT EXISTS financial_statements (
         REFERENCES projects (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- BIZ-88 : catalogues de référence partagés (indépendants des projets),
+-- exploités par l'IA pour analyser et comparer les projets.
+CREATE TABLE IF NOT EXISTS risk_types (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    code             VARCHAR(50)  NOT NULL,
+    libelle          VARCHAR(150) NOT NULL,
+    categorie        VARCHAR(50)  NOT NULL,
+    description      VARCHAR(500) NOT NULL,
+    severite_defaut  INT          NOT NULL,
+    UNIQUE KEY uq_risk_type_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS opportunity_types (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    code           VARCHAR(50)  NOT NULL,
+    libelle        VARCHAR(150) NOT NULL,
+    categorie      VARCHAR(50)  NOT NULL,
+    description    VARCHAR(500) NOT NULL,
+    impact_defaut  INT          NOT NULL,
+    UNIQUE KEY uq_opportunity_type_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS strategic_parameters (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    code         VARCHAR(50)  NOT NULL,
+    libelle      VARCHAR(150) NOT NULL,
+    dimension    VARCHAR(50)  NOT NULL,
+    description  VARCHAR(500) NOT NULL,
+    poids        DOUBLE       NOT NULL,
+    UNIQUE KEY uq_strategic_parameter_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS financial_hypotheses (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    code           VARCHAR(50)  NOT NULL,
+    libelle        VARCHAR(150) NOT NULL,
+    categorie      VARCHAR(50)  NOT NULL,
+    unite          VARCHAR(20)  NOT NULL,
+    valeur_defaut  DOUBLE       NOT NULL,
+    description    VARCHAR(500) NOT NULL,
+    UNIQUE KEY uq_financial_hypothesis_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;
