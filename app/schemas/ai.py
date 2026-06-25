@@ -78,12 +78,16 @@ class AnalysteOutput(BaseModel):
         faiblesses: Faiblesses identifiées.
         risques: Risques principaux.
         opportunites: Opportunités à saisir.
+        actions_correctives: Actions correctives proposées face aux risques.
     """
 
     forces: list[str] = Field(default_factory=list, description="Forces du projet.")
     faiblesses: list[str] = Field(default_factory=list, description="Faiblesses du projet.")
     risques: list[str] = Field(default_factory=list, description="Risques principaux.")
     opportunites: list[str] = Field(default_factory=list, description="Opportunités.")
+    actions_correctives: list[str] = Field(
+        default_factory=list, description="Actions correctives proposées."
+    )
 
 
 class FinancierOutput(BaseModel):

@@ -179,7 +179,8 @@ def _build_sections(
         ),
         "Analyse des risques": (
             "Cartographie des risques à enrichir par l'agent Analyste. Les "
-            "risques majeurs sont suivis et provisionnés."
+            "risques majeurs sont suivis et provisionnés, et des actions "
+            "correctives sont définies pour chacun."
         ),
         "Hypothèses et scénarios financiers": (
             "Trois scénarios sont modélisés (bas, médian, haut) à partir des "
@@ -281,6 +282,12 @@ def _build_sections_from_ai(
     if risques:
         sections["Analyse des risques"] = (
             f"{sections['Analyse des risques']}\n\n**Risques identifiés :**\n{risques}"
+        )
+
+    actions = _bullets(analyse.actions_correctives)
+    if actions:
+        sections["Analyse des risques"] = (
+            f"{sections['Analyse des risques']}\n\n**Actions correctives :**\n{actions}"
         )
 
     commentaire = financier.analyse_globale.strip()

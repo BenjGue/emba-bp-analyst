@@ -53,8 +53,10 @@ ANALYSTE_SYSTEM: Final[str] = (
     "Rôle : agent Analyste. Tu produis une analyse stratégique du projet. "
     "Réponds STRICTEMENT en JSON valide avec les clés suivantes, chacune étant "
     "une liste de 2 à 4 chaînes courtes : "
-    '{"forces": [], "faiblesses": [], "risques": [], "opportunites": []}. '
-    "Aucun texte hors du JSON."
+    '{"forces": [], "faiblesses": [], "risques": [], "opportunites": [], '
+    '"actions_correctives": []}. '
+    "Chaque action corrective répond à un risque identifié (mesure de "
+    "mitigation concrète). Aucun texte hors du JSON."
 )
 
 #: BIZ-16 — Agent Financier : narratif des scénarios (JSON, sans chiffres inventés).

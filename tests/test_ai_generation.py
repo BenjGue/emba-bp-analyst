@@ -45,7 +45,15 @@ _REDACTEUR = {
 def _agent_responder(system: str, user: str) -> str:
     """Renvoie le JSON canonique attendu selon l'agent appelé."""
     if "agent Analyste" in system:
-        return json.dumps({"forces": ["f"], "faiblesses": [], "risques": ["r"], "opportunites": []})
+        return json.dumps(
+            {
+                "forces": ["f"],
+                "faiblesses": [],
+                "risques": ["r"],
+                "opportunites": [],
+                "actions_correctives": ["Mettre en place un plan de mitigation"],
+            }
+        )
     if "agent Financier" in system:
         return json.dumps(
             {
@@ -79,6 +87,7 @@ def test_generation_ia_produit_un_bp_enrichi(client: TestClient, project_id: int
             assert bp.status == "generated_ai"
             assert bp.sections["Résumé exécutif"] == "Résumé IA."
             assert "Commentaire financier IA." in bp.sections["Hypothèses et scénarios financiers"]
+            assert "Actions correctives" in bp.sections["Analyse des risques"]
             assert bp.synthese_codir == "Note CODIR IA."
     finally:
         get_settings.cache_clear()
