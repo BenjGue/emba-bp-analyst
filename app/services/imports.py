@@ -481,8 +481,8 @@ def derive_assumptions(statement: ParsedStatement) -> FinancialAssumptionCreate:
     Les séries sont agrégées de façon déterministe : revenus et coûts sont
     annualisés (ramenés à 12 mois selon la granularité), l'investissement
     initial correspond au besoin de financement maximal (creux de trésorerie
-    cumulée), et le délai de rentabilité au premier moment où la trésorerie
-    cumulée redevient positive.
+    cumulée), et le délai de rentabilité au premier moment, postérieur à ce
+    creux, où la trésorerie cumulée redevient positive.
 
     Args:
         statement: Tableau financier détaillé extrait du fichier.
@@ -516,12 +516,24 @@ def derive_assumptions(statement: ParsedStatement) -> FinancialAssumptionCreate:
 
     cumulative = 0.0
     min_cumulative = 0.0
-    payback_period: int | None = None
+    trough_index = 0
+    cumulatives: list[float] = []
     for index in range(count):
         cumulative += ca[index] - depenses[index]
-        min_cumulative = min(min_cumulative, cumulative)
-        if payback_period is None and cumulative >= 0:
+        cumulatives.append(cumulative)
+        if cumulative < min_cumulative:
+            min_cumulative = cumulative
+            trough_index = index
+
+    # Le retour sur investissement correspond au premier moment, APRÈS le creux
+    # de trésorerie (besoin de financement maximal), où la trésorerie cumulée
+    # redevient positive. Considérer une période antérieure au creux (projet
+    # cash-positif avant un investissement ultérieur) fausserait le délai.
+    payback_period: int | None = None
+    for index in range(trough_index, count):
+        if cumulatives[index] >= 0:
             payback_period = index + 1
+            break
 
     investissement_initial = round(abs(min_cumulative), 2)
     if investissement_initial == 0.0 and depenses:
