@@ -174,3 +174,27 @@ def test_derive_assumptions_jamais_rentable_plafonne_delai() -> None:
     derived = derive_assumptions(statement)
     assert derived.delai_rentabilite_mois == 600
     assert derived.investissement_initial == 1800.0
+
+
+def test_derive_assumptions_payback_apres_creux_investissement() -> None:
+    """Le délai de rentabilité court à partir du creux d'investissement (BIZ-87).
+
+    Profil : la trésorerie est positive au 1er mois, puis un investissement
+    important crée un creux au 2e mois ; le projet ne redevient positif qu'au
+    6e mois. Le délai doit refléter ce retour à l'équilibre (6 mois), et non le
+    1er mois cash-positif antérieur au creux.
+    """
+    periods = [f"M{i}" for i in range(1, 7)]
+    # Cumul : +40, -160, -120, -80, -40, 0 -> creux à M2, retour à zéro à M6.
+    recettes = [50.0, 0.0, 40.0, 40.0, 40.0, 40.0]
+    depenses = [10.0, 200.0, 0.0, 0.0, 0.0, 0.0]
+    statement = ParsedStatement(
+        period_unit="mois",
+        periods=periods,
+        depenses={"total_depenses": depenses},
+        recettes={"chiffre_affaires": recettes},
+        agregats={},
+    )
+    derived = derive_assumptions(statement)
+    assert derived.investissement_initial == 160.0
+    assert derived.delai_rentabilite_mois == 6
