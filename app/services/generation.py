@@ -38,6 +38,10 @@ _SCENARIO_FACTORS: Final[dict[str, float]] = {
     "haut": 1.2,
 }
 
+#: Hypothèse de besoin en fonds de roulement : nombre de jours de chiffre
+#: d'affaires immobilisés (créances clients nettes des dettes fournisseurs).
+_BFR_JOURS_CA: Final[int] = 30
+
 #: Correspondance clé schéma Rédacteur -> titre de section affiché.
 _SECTION_TITLES: Final[dict[str, str]] = {
     "resume_executif": "Résumé exécutif",
@@ -104,8 +108,9 @@ def _build_scenarios(
             du scénario médian afin de rester cohérent avec l'horizon réel.
 
     Returns:
-        Pour chaque scénario, les revenus, coûts, résultat net annuel, ROI et
-        délai de retour sur investissement (mois).
+        Pour chaque scénario, les revenus, coûts, résultat net annuel, ROI,
+        délai de retour sur investissement (mois), besoin en fonds de roulement
+        estimé et trésorerie de fin de première année (€).
     """
     resultat_median = round(revenus - couts, 2)
     scenarios: dict[str, dict[str, float]] = {}
@@ -116,12 +121,19 @@ def _build_scenarios(
         payback = _scenario_payback(
             delai_rentabilite_mois, resultat_median, resultat, investissement
         )
+        # BFR estimé : part du chiffre d'affaires immobilisée (jours de CA).
+        bfr = round(revenus_scenario / 360 * _BFR_JOURS_CA, 2)
+        # Trésorerie de fin d'année 1 : résultat net diminué de l'investissement
+        # initial et du besoin en fonds de roulement à financer.
+        tresorerie = round(resultat - investissement - bfr, 2)
         scenarios[name] = {
             "revenus_annuels": revenus_scenario,
             "couts_annuels": round(couts, 2),
             "resultat_net_annuel": resultat,
             "roi_pourcent": roi,
             "retour_investissement_mois": payback,
+            "bfr_estime": bfr,
+            "tresorerie_fin_annee": tresorerie,
         }
     return scenarios
 
@@ -171,7 +183,9 @@ def _build_sections(
         "Modèle économique": (
             f"Revenus annuels de référence : "
             f"{median['revenus_annuels']:.0f} € ; coûts annuels : "
-            f"{median['couts_annuels']:.0f} €."
+            f"{median['couts_annuels']:.0f} €. Besoin en fonds de roulement "
+            f"estimé ({_BFR_JOURS_CA} j de CA) : {median['bfr_estime']:.0f} € ; "
+            f"trésorerie de fin de 1ʳᵉ année : {median['tresorerie_fin_annee']:.0f} €."
         ),
         "Plan opérationnel": (
             f"Déploiement planifié sur {project.duree_estimee_mois} mois, "
