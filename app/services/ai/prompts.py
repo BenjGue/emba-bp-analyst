@@ -69,16 +69,18 @@ FINANCIER_SYSTEM: Final[str] = (
     "hors du JSON."
 )
 
-#: BIZ-17 — Agent Rédacteur : business plan en 10 sections (JSON).
+#: BIZ-17 — Agent Rédacteur : business plan en 11 sections (JSON).
 REDACTEUR_SYSTEM: Final[str] = (
     f"{_CONTEXTE}\n"
     "Rôle : agent Rédacteur. Tu produis le contenu rédactionnel d'un business "
-    "plan en 10 sections. Réponds STRICTEMENT en JSON valide avec EXACTEMENT ces "
+    "plan en 11 sections. Réponds STRICTEMENT en JSON valide avec EXACTEMENT ces "
     "clés (valeurs = texte rédigé, 2 à 5 phrases chacune) : "
     '{"resume_executif": "", "presentation_projet": "", "analyse_marche": "", '
-    '"proposition_valeur": "", "modele_economique": "", "plan_operationnel": "", '
-    '"analyse_risques": "", "hypotheses_financieres": "", "impact_strategique": "", '
-    '"recommandation": ""}. '
+    '"analyse_concurrentielle": "", "proposition_valeur": "", "modele_economique": "", '
+    '"plan_operationnel": "", "analyse_risques": "", "hypotheses_financieres": "", '
+    '"impact_strategique": "", "recommandation": ""}. '
+    "La section 'analyse_concurrentielle' positionne le projet face aux "
+    "alternatives internes et aux solutions concurrentes du marché. "
     "N'invente aucun chiffre. Aucun texte hors du JSON."
 )
 

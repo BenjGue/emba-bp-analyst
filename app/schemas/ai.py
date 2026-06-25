@@ -112,6 +112,7 @@ class RedacteurOutput(BaseModel):
         resume_executif: Résumé exécutif.
         presentation_projet: Présentation du projet.
         analyse_marche: Analyse du marché et du contexte.
+        analyse_concurrentielle: Analyse concurrentielle.
         proposition_valeur: Proposition de valeur.
         modele_economique: Modèle économique.
         plan_operationnel: Plan opérationnel.
@@ -124,6 +125,7 @@ class RedacteurOutput(BaseModel):
     resume_executif: str = Field(default="", description="Résumé exécutif.")
     presentation_projet: str = Field(default="", description="Présentation du projet.")
     analyse_marche: str = Field(default="", description="Analyse du marché.")
+    analyse_concurrentielle: str = Field(default="", description="Analyse concurrentielle.")
     proposition_valeur: str = Field(default="", description="Proposition de valeur.")
     modele_economique: str = Field(default="", description="Modèle économique.")
     plan_operationnel: str = Field(default="", description="Plan opérationnel.")

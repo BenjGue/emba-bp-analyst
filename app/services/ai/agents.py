@@ -178,7 +178,7 @@ def run_redacteur(
     analyse: AnalysteOutput,
     client: AiClient,
 ) -> RedacteurOutput:
-    """Rédige les 10 sections du business plan (BIZ-17).
+    """Rédige les 11 sections du business plan (BIZ-17).
 
     Args:
         nom: Nom du projet.

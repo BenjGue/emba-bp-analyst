@@ -31,6 +31,7 @@ _REDACTEUR = {
     "resume_executif": "Résumé IA.",
     "presentation_projet": "Présentation IA.",
     "analyse_marche": "Marché IA.",
+    "analyse_concurrentielle": "Concurrence IA.",
     "proposition_valeur": "Valeur IA.",
     "modele_economique": "Modèle IA.",
     "plan_operationnel": "Plan IA.",

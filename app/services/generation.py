@@ -43,6 +43,7 @@ _SECTION_TITLES: Final[dict[str, str]] = {
     "resume_executif": "Résumé exécutif",
     "presentation_projet": "Présentation du projet",
     "analyse_marche": "Analyse du marché et du contexte",
+    "analyse_concurrentielle": "Analyse concurrentielle",
     "proposition_valeur": "Proposition de valeur",
     "modele_economique": "Modèle économique",
     "plan_operationnel": "Plan opérationnel",
@@ -157,6 +158,11 @@ def _build_sections(
             "Analyse de marché à produire par l'agent Analyste (génération IA "
             "différée). Le cadre de référence repose sur le périmètre de la "
             f"direction {project.direction}."
+        ),
+        "Analyse concurrentielle": (
+            "Positionnement face aux alternatives internes et aux solutions du "
+            f"marché sur le périmètre de la direction {project.direction} "
+            "(analyse détaillée générée par l'IA)."
         ),
         "Proposition de valeur": (
             "Synthèse de la valeur créée pour les parties prenantes internes "
