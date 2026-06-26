@@ -174,13 +174,13 @@
 
 ### [BIZ-16] US-3.3 — Générer les 3 scénarios financiers
 **En tant que** agent Financier,  
-**Je veux** produire 3 scénarios (pessimiste, réaliste, optimiste) à partir des hypothèses saisies,  
+**Je veux** produire 3 scénarios (bas, médian, haut) à partir des hypothèses saisies,  
 **Afin que** le CODIR dispose d'une projection financière.
 
 **Points :** 8  
 **Critères d'acceptation :**
-- [ ] 3 scénarios : pessimiste (×0,7 revenus, ×1,2 coûts), réaliste (×1), optimiste (×1,3 revenus, ×0,9 coûts)
-- [ ] Chaque scénario : revenus N, N+1, N+2 ; coûts ; EBITDA ; délai de retour
+- [ ] 3 scénarios appliqués **aux revenus** : bas (×0,8), médian (×1,0), haut (×1,2) ; les **coûts restent constants**
+- [ ] Chaque scénario : revenus annuels, coûts annuels, résultat net, ROI %, retour sur investissement (mois), BFR estimé, trésorerie fin d'année
 - [ ] Les calculs sont effectués côté Python (pas par l'IA) à partir des hypothèses
 - [ ] L'IA rédige uniquement le commentaire narratif de chaque scénario
 - [ ] Sortie JSON valide et persistée en base
@@ -301,7 +301,7 @@
 - [ ] 5 projets minimum couvrant des directions différentes (RH, Digital, Logistique, Finance, RSE)
 - [ ] Chaque projet a ses hypothèses financières et ses dimensions stratégiques complètes
 - [ ] Les projets ont des scores variés (au moins 1 rouge, 1 orange, 2 verts)
-- [ ] Script `db/seed.sql` idempotent (peut être rejoué sans duplication)
+- [ ] Script `scripts/seed.py` idempotent (peut être rejoué sans duplication)
 
 ---
 
@@ -368,7 +368,7 @@
 - [ ] `detect-secrets` configuré en hook pre-commit
 - [ ] GitHub Secret scanning + push protection activés sur le repo
 - [ ] `.env.local` dans `.gitignore`
-- [ ] `ANTHROPIC_API_KEY` et `DATABASE_URL` stockés dans Azure Key Vault en prod
+- [ ] Clé IA (`AI_API_KEY`) et `DATABASE_URL` stockés dans Azure Key Vault en prod
 - [ ] Test : tentative de commit avec une fausse clé → blocage
 
 ---

@@ -58,11 +58,12 @@ Fichier racine lu automatiquement par Claude à chaque session. Contenu recomman
    d'environnement / Key Vault. Ne jamais logger de secret.
 
 ## Structure du repo
-- app/        : code FastAPI (routes, services, agents, scoring)
-- app/agents/ : un module par agent IA (analyste, financier, scoring...)
-- db/         : schema.sql, seed.sql, migrations
+- app/        : code FastAPI (routers, services, agents IA, scoring)
+- app/services/ai/ : agents IA (description, analyste, financier, rédacteur, synthèse, évaluateur)
+- app/static/ : frontend web (HTML/CSS/JS) servi par FastAPI
+- migrations/ : migrations Alembic versionnées ; db/schema.sql pour référence
+- scripts/    : utilitaires (seed.py, jira, probes)
 - tests/      : miroir de app/
-- frontend/   : interface web
 - docs/       : documentation
 
 ## Workflow attendu de l'IA

@@ -57,11 +57,13 @@ Score final **0–100**, agrégé sur **6 dimensions pondérées** :
 
 > Formule : **normalisation** de chaque critère sur [0,1] → **pondération** → somme → mise à l'échelle sur 100. Détail et exemple chiffré dans [`livrable.md`](./docs/livrable.md).
 
+> Seuils de recommandation (calculés côté backend) : **≥ 70 → Go** (pertinence élevée) · **40–69 → Go conditionnel** · **< 40 → No-Go en l'état**.
+
 ## 3. Stack technique
 
 | Couche | Technologie | Justification |
 |---|---|---|
-| **Frontend** | HTML/CSS/JS léger (option Streamlit pour le proto) | Rapide à démontrer, zéro friction |
+| **Frontend** | HTML/CSS/JS léger (`app/static/`, servi par FastAPI) | Rapide à démontrer, zéro friction, une seule origine front+API |
 | **Backend / API** | Python **FastAPI** | Async, typage Pydantic (validation JSON native), OpenAPI auto |
 | **Base de données** | **MySQL** | Imposé par le cas ; projets/hypothèses/scénarios relationnels |
 | **IA générative** | **Azure AI Foundry** (inférence `chat/completions`, modèle **configurable/agnostique** : Claude, GPT…) + orchestration multi-agents **applicative** (backend FastAPI) | Qualité de rédaction, sorties JSON structurées, indépendance vis-à-vis du fournisseur de modèle |
@@ -102,7 +104,7 @@ Ce README est le point d'entrée. Il pointe vers sept documents spécialisés :
 | 🛠️ [`craftsmanship.md`](./docs/craftsmanship.md) | Ingénierie logicielle & automatisation : **JIRA**, **VSCode + serveur MCP JIRA**, **GitHub**, **GitHub Actions**, sécurité du code, **GitHub Advanced Security**, pipeline streamliné |
 | 🤖 [`AI-rules.md`](./docs/AI-rules.md) | Setup & fichiers pour **forcer les bonnes pratiques IA** : commentaires, tests unitaires, documentation, branching par feature |
 | 📦 [`livrable.md`](./docs/livrable.md) | **Tous les livrables attendus**, mappés aux critères d'évaluation |
-| ⚙️ [`How-to-setup.md`](./docs/How-to-setup.md) | **Installation** de tout l'environnement : comptes (GitHub, JIRA, Anthropic, Azure), VSCode, Python, MySQL, MCP |
+| ⚙️ [`How-to-setup.md`](./docs/How-to-setup.md) | **Installation** de tout l'environnement : comptes (GitHub, JIRA, Azure AI Foundry, Azure), VSCode, Python, MySQL, MCP |
 | 📋 [`backlog.md`](./docs/backlog.md) | **6 Epics · 21 User Stories · 94 points** — critères d'acceptation complets, ordre de développement par sprint |
 
 ## 6. Organisation du binôme
@@ -123,23 +125,27 @@ Ce README est le point d'entrée. Il pointe vers sept documents spécialisés :
 ## 8. Démarrage rapide
 
 ```bash
-# 1. Cloner et configurer (détails dans How-to-setup.md)
+# 1. Cloner (détails dans How-to-setup.md)
 git clone https://github.com/BenjGue/emba-bp-analyst.git
 cd emba-bp-analyst
 
-# 2. Backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env        # renseigner ANTHROPIC_API_KEY, MySQL, Azure
+# 2. Environnement Python
+python -m venv .venv && source .venv/bin/activate   # Windows : .venv\Scripts\activate
+pip install -r requirements.txt -r requirements-dev.txt
 
-# 3. Base de données
-mysql -u root -p < db/schema.sql && mysql -u root -p < db/seed.sql
+# 3. Configuration (optionnelle en local : SQLite par défaut, IA désactivée)
+#    Créer un fichier .env.local pour activer MySQL et/ou l'IA Azure AI Foundry :
+#      DATABASE_URL=mysql+pymysql://user:pwd@host/bizplan
+#      AI_ENABLED=true
+#      AI_ENDPOINT=...  AI_DEPLOYMENT=...  AI_API_KEY=...  (ou AI_USE_ENTRA_ID=true)
 
-# 4. Lancer l'API
+# 4. Base de données : migrations Alembic + jeu de données de démo
+alembic upgrade head            # (auto au démarrage si MySQL ; SQLite créé à la volée)
+python scripts/seed.py          # données fictives de démonstration
+
+# 5. Lancer l'application (API + frontend servis ensemble)
 uvicorn app.main:app --reload
-
-# 5. Frontend
-open frontend/index.html    # ou : streamlit run frontend/app.py
+#   Frontend : http://127.0.0.1:8000/      ·  API docs : http://127.0.0.1:8000/docs
 ```
 
 Procédure complète d'installation : [`How-to-setup.md`](./docs/How-to-setup.md).

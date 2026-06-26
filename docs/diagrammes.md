@@ -28,11 +28,8 @@ flowchart TB
     end
 
     subgraph AZ["Microsoft Azure"]
-      subgraph FRONT["Présentation"]
-        swa["Azure Static Web Apps<br/>frontend HTML/CSS/JS"]
-      end
       subgraph COMPUTE["Calcul"]
-        aca["Azure Container Apps<br/>bizplan-api-dev — FastAPI<br/>scale 0 → 3"]
+        aca["Azure Container Apps<br/>bizplan-api-dev — FastAPI<br/>sert le frontend (/, /static) + API<br/>scale 0 → 3"]
         acr["Azure Container Registry<br/>images Docker"]
       end
       subgraph AISVC["IA générative"]
@@ -42,26 +39,24 @@ flowchart TB
       subgraph DATA["Données & secrets"]
         mysql[("Azure DB for MySQL<br/>Flexible Server")]
         kv["Azure Key Vault<br/>secrets / clés"]
-        blob["Azure Blob Storage<br/>exports PDF / JSON"]
       end
-      subgraph OBS["Observabilité"]
-        appi["Application Insights<br/>+ Azure Monitor"]
+      subgraph ROADMAP["Roadmap — non provisionné"]
+        blob["Azure Blob Storage<br/>(exports persistés — piste)"]
+        appi["Application Insights<br/>+ Azure Monitor (piste)"]
       end
       mi(["Managed Identity"])
     end
 
-    user --> swa
-    swa <--> aca
+    user --> aca
     actions -->|push image| acr
     acr --> aca
     actions -->|OIDC deploy| aca
     aca --> mysql
     aca --> foundry
     foundry --> claude
-    aca --> blob
     aca -. secrets .-> kv
-    aca --> appi
-    foundry --> appi
+    aca -. roadmap .-> blob
+    aca -. roadmap .-> appi
     mi -. auth .- aca
     mi -. auth .- kv
 ```
@@ -88,7 +83,7 @@ flowchart TD
     H --> I["Agent Synthèse CODIR<br/>note d'une page"]
     I --> J["Validation JSON ; repli déterministe si un agent échoue"]
     J --> K[("Persistance des résultats (MySQL)")]
-    J --> L["Export (Blob Storage)<br/>PDF / JSON"]
+    J --> L["Export Markdown / PDF<br/>généré à la volée (GET /export)"]
     K --> M["📊 Tableau de bord comparatif<br/>+ recommandations Go / No-Go"]
     L --> M
     M --> N["👔 CODIR — priorisation des projets"]
