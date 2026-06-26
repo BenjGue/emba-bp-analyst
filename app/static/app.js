@@ -154,6 +154,11 @@ async function renderDashboard(direction = "") {
       const bpTag = p.has_business_plan
         ? `<span class="tag bp">BP généré</span>`
         : "";
+      const pdfBtn = p.has_business_plan
+        ? `<a class="row-pdf" href="/projects/${p.id}/export?format=pdf" download
+              title="Télécharger le business plan (PDF)"
+              aria-label="Télécharger le business plan de ${escapeHtml(p.nom)} en PDF">⬇ PDF</a>`
+        : "";
       const row = el(`
         <div class="project-row" data-project="${p.id}">
           ${badge}
@@ -161,9 +166,18 @@ async function renderDashboard(direction = "") {
             <h3>${escapeHtml(p.nom)}</h3>
             <div class="meta"><span class="tag">${escapeHtml(p.direction)}</span> ${bpTag}</div>
           </div>
-          <button class="btn-delete" type="button" title="Supprimer le projet"
-                  aria-label="Supprimer le projet ${escapeHtml(p.nom)}">🗑</button>
+          <div class="row-actions">
+            ${pdfBtn}
+            <button class="btn-delete" type="button" title="Supprimer le projet"
+                    aria-label="Supprimer le projet ${escapeHtml(p.nom)}">🗑</button>
+          </div>
         </div>`);
+      const pdfLink = row.querySelector(".row-pdf");
+      if (pdfLink) {
+        // Le téléchargement est géré nativement par l'ancre ; on empêche
+        // seulement la propagation pour ne pas ouvrir la fiche projet.
+        pdfLink.addEventListener("click", (ev) => ev.stopPropagation());
+      }
       const delBtn = row.querySelector(".btn-delete");
       delBtn.addEventListener("click", async (ev) => {
         ev.stopPropagation();
