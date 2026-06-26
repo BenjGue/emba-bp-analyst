@@ -1,0 +1,1000 @@
+openapi: 3.0.3
+info:
+  title: BizPlan-IA
+  version: 0.1.0
+  description: >-
+    API de création automatisée de Business Plans et de scoring de pertinence
+    de projets internes (La Poste). Permet le cycle de vie complet d'un projet :
+    création, hypothèses financières (saisie manuelle ou import Excel),
+    évaluation stratégique, scoring, génération du business plan et export
+    (Markdown / PDF). Une couche IA (Sonnet via Foundry) assiste la rédaction de
+    description et la proposition de notes stratégiques.
+  contact:
+    name: Équipe BizPlan-IA
+  license:
+    name: Propriétaire
+
+servers:
+  - url: http://localhost:8000
+    description: Développement local
+  - url: https://{host}
+    description: Azure Container Apps (production)
+    variables:
+      host:
+        default: bizplan-ia.azurecontainerapps.io
+
+tags:
+  - name: health
+    description: Sonde de disponibilité de l'application.
+  - name: score
+    description: Calcul pur du score de pertinence (sans persistance).
+  - name: projects
+    description: Cycle de vie des projets, finances, dimensions, business plan.
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Healthcheck
+      operationId: getHealth
+      responses:
+        "200":
+          description: L'application répond.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /score:
+    post:
+      tags: [score]
+      summary: Calculer le score de pertinence
+      description: Calcul pur (< 200 ms), sans persistance ni IA.
+      operationId: computeScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategicDimensions"
+      responses:
+        "200":
+          description: Score global et détail par dimension.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /projects:
+    post:
+      tags: [projects]
+      summary: Créer un projet
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreate"
+      responses:
+        "201":
+          description: Projet créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags: [projects]
+      summary: Lister les projets (tableau de bord comparatif)
+      operationId: listProjects
+      parameters:
+        - name: direction
+          in: query
+          required: false
+          description: Filtrer par direction concernée.
+          schema:
+            $ref: "#/components/schemas/Direction"
+      responses:
+        "200":
+          description: Résumés de projets triés par score décroissant.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectSummary"
+
+  /projects/draft-description:
+    post:
+      tags: [projects]
+      summary: Rédiger une description de projet assistée par IA
+      description: Endpoint sans persistance ; le texte est renvoyé pour pré-remplir le formulaire.
+      operationId: draftProjectDescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DescriptionDraftRequest"
+      responses:
+        "200":
+          description: Description rédigée par l'IA.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DescriptionDraftResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "502":
+          $ref: "#/components/responses/AiError"
+        "503":
+          $ref: "#/components/responses/AiDisabled"
+
+  /projects/{project_id}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [projects]
+      summary: Consulter un projet
+      operationId: getProject
+      responses:
+        "200":
+          description: Projet demandé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [projects]
+      summary: Modifier un projet
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Projet mis à jour.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [projects]
+      summary: Supprimer un projet
+      operationId: deleteProject
+      responses:
+        "204":
+          description: Projet supprimé (aucun contenu).
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/financials:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    put:
+      tags: [projects]
+      summary: Saisir les hypothèses financières
+      operationId: upsertFinancials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FinancialAssumptionCreate"
+      responses:
+        "200":
+          description: Hypothèses financières persistées.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialAssumptionResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags: [projects]
+      summary: Consulter les hypothèses financières
+      operationId: getFinancials
+      responses:
+        "200":
+          description: Hypothèses financières persistées.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialAssumptionResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/financials/import:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [projects]
+      summary: Importer les hypothèses financières depuis un fichier Excel
+      operationId: importFinancials
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Classeur Excel (.xlsx/.xlsm), 2 Mio maximum.
+      responses:
+        "201":
+          description: Hypothèses extraites et métadonnées du fichier conservé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialImportResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/FileTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags: [projects]
+      summary: Consulter le fichier Excel importé
+      operationId: getFinancialsImport
+      responses:
+        "200":
+          description: Métadonnées du dernier fichier importé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialImportMetadata"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/financials/import/file:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [projects]
+      summary: Télécharger le fichier Excel importé
+      operationId: downloadFinancialsImport
+      responses:
+        "200":
+          description: Fichier Excel original en pièce jointe.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/financials/import-detailed:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [projects]
+      summary: Importer un tableau financier détaillé multi-colonnes
+      operationId: importFinancialStatement
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Classeur Excel détaillé (.xlsx/.xlsm), 2 Mio maximum.
+      responses:
+        "201":
+          description: Tableau détaillé, hypothèses dérivées et métadonnées du fichier.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialStatementResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/FileTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /projects/{project_id}/financials/statement:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [projects]
+      summary: Consulter le tableau financier détaillé importé
+      operationId: getFinancialStatement
+      responses:
+        "200":
+          description: Tableau financier détaillé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialStatementData"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/dimensions:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    put:
+      tags: [projects]
+      summary: Saisir les dimensions stratégiques et calculer le score
+      operationId: upsertDimensions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DimensionsSubmission"
+      responses:
+        "200":
+          description: Score global et détail par dimension.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /projects/{project_id}/dimensions/suggest:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [projects]
+      summary: Proposer les notes stratégiques via l'IA
+      description: Endpoint sans persistance ; la proposition pré-remplit l'écran d'évaluation.
+      operationId: suggestDimensions
+      responses:
+        "200":
+          description: Notes proposées, justifications, synthèse et score déterministe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DimensionSuggestion"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/AiError"
+        "503":
+          $ref: "#/components/responses/AiDisabled"
+
+  /projects/{project_id}/score:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [projects]
+      summary: Calculer et persister le score d'un projet
+      operationId: createProjectScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategicDimensions"
+      responses:
+        "200":
+          description: Score global et détail par dimension.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags: [projects]
+      summary: Consulter le dernier score d'un projet
+      operationId: getProjectScore
+      responses:
+        "200":
+          description: Dernier score global et détail par dimension.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/generate:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      tags: [projects]
+      summary: Générer le business plan
+      operationId: generateBusinessPlan
+      responses:
+        "201":
+          description: Business plan généré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessPlanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/bp:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [projects]
+      summary: Consulter le business plan généré
+      operationId: getBusinessPlan
+      responses:
+        "200":
+          description: Business plan généré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessPlanResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{project_id}/export:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      tags: [projects]
+      summary: Exporter le business plan (Markdown ou PDF)
+      operationId: exportBusinessPlan
+      parameters:
+        - name: format
+          in: query
+          required: false
+          description: Format d'export.
+          schema:
+            type: string
+            enum: [md, pdf]
+            default: md
+      responses:
+        "200":
+          description: Business plan exporté en pièce jointe.
+          content:
+            text/markdown:
+              schema:
+                type: string
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      description: Identifiant technique du projet.
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    NotFound:
+      description: Ressource introuvable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Requête invalide (ex. hypothèses financières absentes).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    FileTooLarge:
+      description: Le fichier dépasse la taille maximale autorisée (2 Mio).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    AiError:
+      description: Le service IA n'a pas pu produire de réponse exploitable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    AiDisabled:
+      description: Le service IA est désactivé ou indisponible.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Erreur de validation des données d'entrée.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HTTPValidationError"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Message d'erreur lisible.
+      required: [detail]
+
+    HTTPValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationErrorItem"
+
+    ValidationErrorItem:
+      type: object
+      properties:
+        loc:
+          type: array
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string
+      required: [loc, msg, type]
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          default: ok
+          description: État de l'application.
+        app_name:
+          type: string
+          description: Nom de l'application.
+        version:
+          type: string
+          description: Version du backend.
+      required: [app_name, version]
+
+    Direction:
+      type: string
+      description: Directions de La Poste éligibles au dépôt d'un projet.
+      enum:
+        - Services-Courrier-Colis
+        - La Banque Postale
+        - La Poste Groupe
+        - Réseau La Poste
+        - Geopost
+        - Numérique
+
+    ProjectCreate:
+      type: object
+      properties:
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nom du projet.
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Description du projet.
+        direction:
+          $ref: "#/components/schemas/Direction"
+        duree_estimee_mois:
+          type: integer
+          exclusiveMinimum: true
+          minimum: 0
+          maximum: 600
+          description: Durée estimée du projet, en mois (> 0).
+      required: [nom, description, direction, duree_estimee_mois]
+
+    ProjectUpdate:
+      type: object
+      description: Tous les champs sont optionnels ; seuls ceux fournis sont mis à jour.
+      properties:
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 200
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          nullable: true
+        direction:
+          allOf:
+            - $ref: "#/components/schemas/Direction"
+          nullable: true
+        duree_estimee_mois:
+          type: integer
+          exclusiveMinimum: true
+          minimum: 0
+          maximum: 600
+          nullable: true
+
+    ProjectResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Identifiant technique du projet.
+        nom:
+          type: string
+        description:
+          type: string
+        direction:
+          $ref: "#/components/schemas/Direction"
+        duree_estimee_mois:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          description: Date de création (UTC).
+      required: [id, nom, description, direction, duree_estimee_mois, created_at]
+
+    ProjectSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        direction:
+          $ref: "#/components/schemas/Direction"
+        score_total:
+          type: number
+          format: float
+          nullable: true
+          description: Dernier score global (0-100).
+        has_business_plan:
+          type: boolean
+          default: false
+          description: Un business plan a été généré.
+        created_at:
+          type: string
+          format: date-time
+      required: [id, nom, direction, created_at]
+
+    FinancialAssumptionCreate:
+      type: object
+      properties:
+        investissement_initial:
+          type: number
+          format: float
+          minimum: 0
+          description: Investissement initial (€).
+        revenus_annuels:
+          type: number
+          format: float
+          minimum: 0
+          description: Revenus annuels attendus (€).
+        couts_annuels:
+          type: number
+          format: float
+          minimum: 0
+          description: Coûts annuels d'exploitation (€).
+        delai_rentabilite_mois:
+          type: integer
+          exclusiveMinimum: true
+          minimum: 0
+          maximum: 600
+          description: Délai avant rentabilité (mois).
+      required:
+        - investissement_initial
+        - revenus_annuels
+        - couts_annuels
+        - delai_rentabilite_mois
+
+    FinancialAssumptionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        project_id:
+          type: integer
+        investissement_initial:
+          type: number
+          format: float
+        revenus_annuels:
+          type: number
+          format: float
+        couts_annuels:
+          type: number
+          format: float
+        delai_rentabilite_mois:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - project_id
+        - investissement_initial
+        - revenus_annuels
+        - couts_annuels
+        - delai_rentabilite_mois
+        - created_at
+
+    FinancialImportMetadata:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Nom du fichier d'origine.
+        content_type:
+          type: string
+          description: Type MIME déclaré à l'upload.
+        size_bytes:
+          type: integer
+          description: Taille du fichier, en octets.
+        uploaded_at:
+          type: string
+          format: date-time
+          description: Horodatage de l'import (UTC).
+      required: [filename, content_type, size_bytes, uploaded_at]
+
+    FinancialImportResult:
+      type: object
+      properties:
+        financials:
+          $ref: "#/components/schemas/FinancialAssumptionResponse"
+        import_file:
+          $ref: "#/components/schemas/FinancialImportMetadata"
+      required: [financials, import_file]
+
+    FinancialStatementData:
+      type: object
+      description: Tableau financier détaillé (temps en lignes, catégories en colonnes).
+      properties:
+        period_unit:
+          type: string
+          description: Granularité temporelle détectée (semaine/mois/annee).
+        periods:
+          type: array
+          items:
+            type: string
+          description: Libellés des périodes, dans l'ordre.
+        depenses:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+              format: float
+          description: Séries de dépenses par poste canonique.
+        recettes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+              format: float
+          description: Séries de recettes par poste canonique.
+        agregats:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+              format: float
+          description: Séries d'agrégats par poste canonique.
+      required: [period_unit, periods, depenses, recettes, agregats]
+
+    FinancialStatementResult:
+      type: object
+      properties:
+        statement:
+          $ref: "#/components/schemas/FinancialStatementData"
+        financials:
+          $ref: "#/components/schemas/FinancialAssumptionResponse"
+        import_file:
+          $ref: "#/components/schemas/FinancialImportMetadata"
+      required: [statement, financials, import_file]
+
+    StrategicDimensions:
+      type: object
+      description: >-
+        Notes stratégiques (0 à 10). Pour `risque`, la note représente la
+        maîtrise du risque (10 = risque le mieux maîtrisé).
+      properties:
+        rentabilite:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Potentiel de rentabilité (0-10).
+        alignement:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Alignement stratégique (0-10).
+        risque:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Maîtrise du risque (0-10).
+        impact_operationnel:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Impact opérationnel (0-10).
+        impact_social:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Impact social/environnemental (0-10).
+        faisabilite:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Faisabilité technique (0-10).
+      required:
+        - rentabilite
+        - alignement
+        - risque
+        - impact_operationnel
+        - impact_social
+        - faisabilite
+
+    DimensionsSubmission:
+      allOf:
+        - $ref: "#/components/schemas/StrategicDimensions"
+        - type: object
+          properties:
+            justification:
+              type: string
+              maxLength: 2000
+              nullable: true
+              description: Justification d'une modification manuelle des notes proposées.
+            ai_synthese:
+              type: string
+              maxLength: 4000
+              nullable: true
+              description: Synthèse de la logique IA ayant proposé les notes (audit).
+
+    DimensionDetail:
+      type: object
+      properties:
+        note:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Note brute (0-10).
+        poids:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Pondération appliquée (0-1).
+        contribution:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Contribution au score (0-100).
+      required: [note, poids, contribution]
+
+    ScoreResponse:
+      type: object
+      properties:
+        total:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Score global de pertinence (0-100).
+        dimensions:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/DimensionDetail"
+          description: Détail de la contribution de chaque dimension.
+      required: [total, dimensions]
+
+    DimensionSuggestion:
+      type: object
+      properties:
+        dimensions:
+          $ref: "#/components/schemas/StrategicDimensions"
+        justifications:
+          type: object
+          additionalProperties:
+            type: string
+          description: Justification par dimension.
+        synthese:
+          type: string
+          description: Synthèse expliquant les notes.
+        score:
+          $ref: "#/components/schemas/ScoreResponse"
+      required: [dimensions, score]
+
+    DescriptionDraftRequest:
+      type: object
+      properties:
+        idees:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Idées clés du projet.
+        direction:
+          $ref: "#/components/schemas/Direction"
+        nom:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Nom du projet (option).
+      required: [idees, direction]
+
+    DescriptionDraftResponse:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Description rédigée par l'IA (bornée à 1000 caractères).
+      required: [description]
+
+    ScenarioResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type de scénario (bas, median, haut).
+        data:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Données chiffrées du scénario.
+      required: [type, data]
+
+    BusinessPlanResponse:
+      type: object
+      properties:
+        project_id:
+          type: integer
+        status:
+          type: string
+          description: Statut de génération.
+        sections:
+          type: object
+          additionalProperties:
+            type: string
+          description: Sections du BP (titre -> contenu Markdown).
+        synthese_codir:
+          type: string
+          description: Note de synthèse pour le comité de direction.
+        scenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenarioResponse"
+        created_at:
+          type: string
+          format: date-time
+          description: Date de génération (UTC).
+      required: [project_id, status, sections, synthese_codir, created_at]

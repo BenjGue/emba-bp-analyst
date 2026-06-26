@@ -1,0 +1,358 @@
+
+Projet 2 à réaliser en binôme
+Executive MBA EPITECH P 2026
+
+Conception d'un outil de création de Business plan pour La Poste
+La Poste, en tant qu’entreprise à mission, doit évaluer de nombreux projets internes : innovations, nouveaux services, digitalisation, intrapreneuriat, modernisation d’outils, projets RH, projets territoriaux, etc. Chaque projet nécessite un business plan structuré, permettant au comité de direction de statuer sur :
+la faisabilité du projet
+sa rentabilité
+son alignement stratégique
+son impact opérationnel
+ses risques
+son coût d’opportunité par rapport à d’autres projets
+Or, la construction d’un business plan est souvent :
+longue
+hétérogène selon les équipes
+dépendante de compétences financières inégales
+difficile à comparer entre projets
+Aussi un business plan est nécessaire pour le lancement d’un produit ou service ou d’une innovation en interne, notamment pour évaluer la faisabilité, le Go ou non Go donné au projet en comité de direction. Mais aussi pour estimer ce que va coûter la solution à développer et ce qu’elle va rapporter au nom au fil des mois et des années.
+L’objectif est de faciliter le travail du décideur amener à statuer sur un projet qui lui est présenté et à prioriser ou retenir certains projets au dépend d’autres jugés moins rentables, moins stratégiques, moins porteurs en termes d’image ou pour toute autre considération technique, politique, etc.
+
+L’objectif du projet est donc de créer un outil intelligent, capable d’assister un porteur de projet dans la création d’un business plan complet, cohérent, chiffré et argumenté.
+On peut imaginer un business plan avec d’une part une feuille Excel avec en ordonnée le temps (au fil des semaines, des mois ou des années) et en abscisse des éléments comme ceux qui suivent :
+Catégories
+Pour les dépenses
+ 
+Salaires (développement, marketing, commercial, etc.)
+Achat matériel
+Achat logiciel
+Charges fiscales
+Frais administratifs
+Frais bancaires
+Achats divers
+Autres dépenses
+Total dépenses
+
+Pour les recettes
+Nombre de clients
+Recette produit ou service 1
+Recette produit ou service 2
+Recette produit ou service 3
+Recette produit ou service 4
+Chiffre d'affaires
+
+Avec pour des projets dans le domaine de l’intrapreneuriat, le fait de raisonner en équivalent, jours/homme.
+
+Pour les autres paramètres
+
+Marge commerciale brute
+% du CA
+EBE
+% du CA
+Résultat d'exploitation
+% du CA
+EBITDA
+
+On peut imaginer pour les annexes, déjà une fiche du type en annexe 1 résumant le projet :
+
+Nom du projet
+Forme juridique (et précision dans le cadre de l'intrapreneuriat : sponsor, durée initiale, etc.)
+Date de création
+Coordonnées adresse/tél/mél/site
+
+
+Descriptif des produits/services commercialisés
+(descriptif technique et commercial, modes de commercialisation)
+(prix de vente des produits et services, réseau de distribution envisagé, …)
+(produits ou services destinés à l'extérieur ou à l'interne pour un grand groupe par exemple)
+
+Détail de la composition du capital (si applicable)
+Associé 1
+Associé 2
+Associé 3
+ 
+ 
+Détail des frais de constitution
+Honoraires d'avocat
+Honoraires expert comptable
+ 
+ 
+Détail acquisition du fonds de commerce, bail commercial
+Dépôt de garantie
+Avance loyers
+ 
+ 
+Détail des travaux et aménagements (si magasin ou locaux physiques)
+Réfection, rénovation boutique
+Mobilier, aménagements divers
+ 
+ 
+Détail des investissements informatiques
+ 
+ 
+ 
+ 
+ 
+Détail du stock
+ 
+ 
+ 
+Besoin en Fonds de Roulement
+ 
+ 
+ 
+
+Trésorerie
+Apport financier personnel des associés
+Subvention
+Aides (à rembourser et échéances)
+Prêts
+Emprunt bancaire
+ 
+ 
+Besoin de financement
+
+
+Et pour annexe 2 :
+
+Description du marché
+(implantation, nombre de clients cibles, potentiel de développement, …) 
+
+Analyse de la concurrence
+(noms et adresses des concurrents, chiffre d'affaires réalisés, …)
+
+Description des principaux clients ou prospects
+(nom des clients, volume des commandes, part dans le chiffre d'affaires, …)
+
+Stratégie clients
+(nombre potentiel de clients, type de clientèle, habitudes de consommation)
+(répartition du chiffre d'affaires selon les clients B, C, A)
+
+Technologies utilisées
+(ruptures ou évolutions induites)
+
+On peut ensuite imaginer en annexe 3 :
+
+Spécificités du projet
+
+Hypothèses à lister
+Hypothèse 1
+Hypothèse 2
+Hypothèse 3
+Hypothèse 4
+Etc.
+
+Autres considérations
+coût d'acquisition du client
+taux d'utilisation de l'outil (si outil interne en entreprise pour faire gagner du temps, créer de la valeur, etc.)
+scénarios à bâtir (hypothèse basse, haute et médiane) 
+autres spécificités à développer (par exemple dans le cadre d'un outil SIRH)
+
+
+Dimensions à intégrer dans un business plan moderne
+Pour un outil non Excel et ergonomique et facile d’utilisation, les dimensions suivantes sont à considérer :
+1. Données financières
+Dépenses (salaires, matériel, logiciels, fiscalité, achats divers…)
+Recettes (par produit/service)
+Marge brute
+EBITDA
+Résultat d’exploitation
+Besoin en fonds de roulement
+Trésorerie
+Scénarios (bas, médian, haut)
+2. Données stratégiques
+Alignement avec les priorités du Groupe
+Impact sur les branches
+Risques (techniques, humains, réglementaires)
+Opportunités de marché
+Avantage concurrentiel
+3. Données opérationnelles
+Ressources nécessaires
+Planning
+Hypothèses clés
+Dépendances internes (par ex. avec d’autres projets)
+Indicateurs de succès ou KPI
+4. Données qualitatives
+Valeur sociale
+Impact environnemental
+Image de marque
+Innovation
+Ces éléments permettront à l’IA de générer un business plan complet, et pas seulement un tableau Excel.
+
+Le sujet est de concevoir un démonstrateur utilisant une IA générative pour créer automatiquement un business plan complet et d’établir un score de pertinence permettant d’aider les décideurs de La Poste à prioriser les projets.
+
+Architecture technique cible
+Backend : API simple en Python (Flask / FastAPI) ou Node.js
+Base de données : MySQL
+IA générative : Claude via API
+Front-end : interface web légère (HTML/CSS/JS, Streamlit ou Gradio)
+Format d’échange : fichier JSON structuré
+Hébergement : local ou cloud gratuit (Render, Vercel, Replit)
+
+A. Travail attendu en binôme
+1. Modéliser un score de pertinence de projet
+Il devra intégrer au moins 6 dimensions :
+Rentabilité
+Alignement stratégique
+Risque
+Impact opérationnel
+Impact social / environnemental
+Faisabilité technique
+Ceci permettra d’établir un score final de 0 à 100.
+2. Créer une base MySQL fictive
+Elle devra contenir :
+5 à 10 projets fictifs
+30 à 50 hypothèses financières
+20 paramètres stratégiques
+10 profils de porteurs de projets ou 10 risques types et 10 opportunités types
+Objectif : permettre à l’IA d’analyser et comparer les projets.
+
+Exemples de projets fictifs
+
+Projet 1 : outil RH interne
+Projet 2 : service numérique pour les facteurs autour de leur smartphone (Facteo)
+Projet 3 : innovation logistique pour optimiser la livraison
+Projet 4 : application client
+Projet 5 : projet territorial
+
+Structure minimale de la base MySQL
+
+Table projets
+Table hypotheses_financieres
+Table parametres_strategiques
+Table risques
+Table opportunites
+Table scenarios
+
+Parcours utilisateur
+
+Un démonstrateur n’est pas seulement un calculateur : il doit raconter une histoire utilisateur claire.
+Parcours recommandé :
+Le porteur de projet saisit les informations clés
+L’outil calcule automatiquement un score de pertinence
+L’IA génère un business plan complet
+L’IA propose des scénarios financiers (bas, médian, haut)
+L’IA rédige une note de synthèse Codir
+Le manager peut télécharger ou copier la synthèse via un fichier
+
+3. Développer un outil web simple
+L’outil devra permettre :
+de saisir un projet
+de générer automatiquement un business plan complet
+de calculer le score de pertinence
+de proposer des recommandations
+de générer une synthèse pour un comité de direction
+4. Concevoir des prompts avancés
+Les prompts devront permettre à l’IA de :
+analyser un projet
+générer un business plan structuré
+produire un tableau financier
+proposer des scénarios
+rédiger une note de synthèse
+identifier les risques
+proposer des actions correctives
+5. Produire un démonstrateur fonctionnel
+Le démonstrateur devra inclure :
+un formulaire de saisie
+un calcul automatique
+une analyse IA
+un export texte (synthèse)
+un tableau de bord simple
+
+Périmètre obligatoire vs optionnel
+Obligatoire
+Score de pertinence
+Base MySQL
+Génération automatique du business plan
+Analyse IA (forces, faiblesses, risques)
+Interface web simple
+Note de synthèse Codir
+Optionnel
+Visualisations avancées (radar, heatmap)
+Simulation d’impact d’une décision
+Analyse automatique d’un fichier Excel
+Chatbot d’aide au porteur de projet
+
+
+4. Proposition de démonstrateur : Business Plan + Score IA
+A. Score de pertinence (à concevoir)
+Critères possibles :
+RoI
+Délai de retour sur investissement
+Alignement stratégique
+Risque technique
+Risque humain
+Impact environnemental
+Impact social
+Complexité opérationnelle
+Maturité du porteur de projet
+Pondération à imaginer :
+Pondération recommandée (ex : rentabilité 30 %, risque 20 %, alignement stratégique 20 %, etc.)
+Formule de calcul (normalisation + pondération)
+Exemple chiffré
+
+B. Rôle de l’IA générative
+L’IA doit produire :
+un diagnostic narratif
+un business plan complet
+un tableau financier
+un plan d’action
+une note de synthèse pour un Codir
+des scénarios financiers
+
+5. Prompts avancés à produire
+1. Prompt d’analyse de projet
+Analyse les données saisies et identifie les forces/faiblesses.
+2. Prompt de génération de business plan
+Produit un business plan complet structuré en 10 sections
+Résumé exécutif
+Description du projet
+Analyse stratégique
+Analyse de marché
+Analyse concurrentielle
+Modèle économique
+Hypothèses financières
+Scénarios
+Plan d’action
+Synthèse Codir
+
+3. Prompt de scénarios financiers
+Génère 3 scénarios : bas, médian, haut.
+4. Prompt de note CODIR
+Synthèse en 1 page pour un comité de direction.
+
+Cadre d’utilisation de l’IA générative
+Contraintes à imposer
+Réponses structurées en JSON pour faciliter l’intégration
+Prompts paramétrés avec variables dynamiques
+Style neutre, professionnel, non prescriptif
+Interdiction d’inférer des données non fournies
+Validation systématique des réponses IA côté backend
+Gestion des erreurs IA
+JSON mal formé
+Hallucinations
+Recommandations incohérentes
+Données absentes
+
+Format des données envoyées à l’IA
+Format JSON d’entrée (projet, hypothèses, risques, etc.)
+Format JSON de sortie attendu (sections du business plan, tableaux, scénarios)
+Exemple de payload minimal
+
+6. Livrables attendus
+Base MySQL
+Score de pertinence
+Interface web
+Prompts documentés
+Vidéo de démonstration
+Rapport final
+
+Critères d’évaluation du livrable
+Critères proposés
+Qualité du score de pertinence (cohérence, pondération, justification)
+Qualité des prompts (structure, robustesse, pertinence)
+Qualité du démonstrateur (ergonomie, fluidité, stabilité)
+Qualité de la base MySQL (structure, cohérence, réalisme)
+Qualité du business plan généré (structure, exhaustivité, clarté)
+Capacité à expliquer les choix (architecture, arbitrages, limites)
+Qualité de la vidéo de démonstration (clarté, pédagogie)
