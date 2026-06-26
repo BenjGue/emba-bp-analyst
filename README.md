@@ -37,7 +37,7 @@ Un **démonstrateur web** où :
 
 1. Le porteur de projet **saisit les informations clés** (formulaire).
 2. L'outil **calcule automatiquement un score de pertinence** sur 6 dimensions.
-3. Une **architecture multi-agents** (orchestrée côté backend sur **Azure AI Foundry**) génère un **business plan complet en 10 sections**.
+3. Une **architecture multi-agents** (**6 agents IA**, orchestrés **par le code** — service FastAPI, l'inférence étant servie par **Azure AI Foundry**) génère un **business plan complet en 11 sections**.
 4. L'IA propose **3 scénarios financiers** (bas, médian, haut).
 5. L'IA rédige une **note de synthèse CODIR** d'une page.
 6. Le manager **télécharge / copie** la synthèse et consulte un **tableau de bord** comparatif.
@@ -81,13 +81,14 @@ L'architecture détaillée (agents spécialisés, services Azure, justification 
                      ┌────────▼─────────┐    ┌─────────────▼──────────────┐
                      │   MySQL (Azure)  │    │ Azure AI Foundry           │
                      │ projets, scénarios│   │ (1 déploiement de modèle) │
-                     │ hypothèses, risques│  │ Agents (prompts dédiés) :  │
-                     └─────────────────┘    │ • Analyste                 │
-                                             │ • Évaluateur (notes)       │
-   Le score est calculé de façon             │ • Financier (scénarios)    │
-   100 % déterministe (scoring.py),          │ • Rédacteur BP (10 sec.)   │
-   ce n'est pas un agent IA.                 │ • Synthèse CODIR           │
-                                             └────────────────────────────┘
+                     │ hypothèses, risques│  │ 6 agents (prompts dédiés) :│
+                     └─────────────────┘    │ • Description (pré-saisie)  │
+                                             │ • Évaluateur (6 notes)     │
+   Le score est calculé de façon             │ • Analyste                 │
+   100 % déterministe (scoring.py),          │ • Financier (commentaire)  │
+   ce n'est pas un agent IA.                 │ • Rédacteur BP (11 sec.)   │
+   L'orchestration est du code               │ • Synthèse CODIR           │
+   (generation.py), pas un agent.            └────────────────────────────┘
 ```
 
 ## 5. Documentation du projet

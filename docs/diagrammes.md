@@ -13,9 +13,10 @@
 
 Vue des services managés Azure et de leur chaîne de déploiement depuis GitHub.
 L'API FastAPI est conteneurisée sur **Azure Container Apps** (scale-to-zero) ;
-l'IA est orchestrée par **Azure AI Foundry Agent Service** appelant le modèle
-**Claude**. Les secrets vivent dans **Key Vault**, l'authentification
-inter-services repose sur des **identités managées**.
+l'orchestration des agents est **applicative** (code FastAPI), l'inférence étant
+servie par **Azure AI Foundry** (`chat/completions`, **modèle agnostique**). Les
+secrets vivent dans **Key Vault**, l'authentification inter-services repose sur
+des **identités managées**.
 
 ```mermaid
 flowchart TB
@@ -35,8 +36,8 @@ flowchart TB
         acr["Azure Container Registry<br/>images Docker"]
       end
       subgraph AISVC["IA générative"]
-        foundry["Azure AI Foundry<br/>Agent Service (orchestration)"]
-        claude["Modèle Claude (Sonnet 4.6)<br/>via API"]
+        foundry["Azure AI Foundry<br/>inférence chat/completions"]
+        claude["Modèle configurable (agnostique)<br/>Claude, GPT… via API"]
       end
       subgraph DATA["Données & secrets"]
         mysql[("Azure DB for MySQL<br/>Flexible Server")]
@@ -77,14 +78,15 @@ de façon déterministe, jamais par l'IA.
 flowchart TD
     A["👤 Porteur de projet<br/>saisit le projet (formulaire)"] --> B["API FastAPI<br/>validation Pydantic (JSON)"]
     B --> C[("MySQL<br/>projet + hypothèses + risques")]
-    B --> D{"Orchestrateur d'agents"}
-    D -->|en parallèle| E["Agent Analyste<br/>forces / faiblesses / risques / opportunités"]
-    D -->|en parallèle| F["Agent Financier<br/>tableau + 3 scénarios (bas / médian / haut)"]
-    E --> G["⚙️ Calcul du SCORE — backend déterministe<br/>6 dimensions pondérées → 0–100"]
-    F --> G
-    G --> H["Agent Rédacteur BP<br/>business plan en 10 sections"]
+    B --> D{"Orchestrateur (code FastAPI)<br/>generation.py — séquentiel"}
+    B --> S["⚙️ Calcul des SCÉNARIOS financiers<br/>backend déterministe (bas / médian / haut)"]
+    D --> E["Agent Analyste<br/>forces / faiblesses / risques / opportunités / actions"]
+    E --> F["Agent Financier<br/>commente les scénarios (ne recalcule rien)"]
+    S --> F
+    F --> G["⚙️ Calcul du SCORE — backend déterministe<br/>6 dimensions pondérées → 0–100"]
+    G --> H["Agent Rédacteur BP<br/>business plan en 11 sections"]
     H --> I["Agent Synthèse CODIR<br/>note d'une page"]
-    I --> J["Validation JSON + retry ciblé si malformé"]
+    I --> J["Validation JSON ; repli déterministe si un agent échoue"]
     J --> K[("Persistance des résultats (MySQL)")]
     J --> L["Export (Blob Storage)<br/>PDF / JSON"]
     K --> M["📊 Tableau de bord comparatif<br/>+ recommandations Go / No-Go"]

@@ -137,7 +137,7 @@
 
 ## [BIZ-3] EPIC 3 — Génération du Business Plan (agents IA)
 
-> Architecture multi-agents Claude pour générer un BP complet en 10 sections, 3 scénarios financiers et une note CODIR.
+> Architecture multi-agents (6 agents IA, orchestrés par le code) pour générer un BP complet en 11 sections, 3 scénarios financiers et une note CODIR.
 
 **Priorité :** 🔴 Must-have
 
@@ -150,9 +150,9 @@
 
 **Points :** 8  
 **Critères d'acceptation :**
-- [ ] Orchestrateur Azure AI Foundry déclenche les agents dans l'ordre défini
+- [ ] L'orchestrateur **applicatif** (code FastAPI, `generation.py`) déclenche les agents dans l'ordre défini (séquentiel)
 - [ ] Chaque agent reçoit le contexte du projet + les sorties des agents précédents
-- [ ] En cas d'échec d'un agent, retry × 2 puis erreur explicite
+- [ ] En cas d'échec d'un agent, **repli déterministe** (template) pour toujours produire un livrable
 - [ ] Chaque appel agent est loggé (input, output, durée, tokens) dans Application Insights
 - [ ] Timeout global de génération : 5 minutes
 
@@ -187,18 +187,18 @@
 
 ---
 
-### [BIZ-17] US-3.4 — Générer le Business Plan en 10 sections
+### [BIZ-17] US-3.4 — Générer le Business Plan en 11 sections
 **En tant que** agent Rédacteur,  
-**Je veux** produire un BP structuré en 10 sections à partir de toutes les données,  
+**Je veux** produire un BP structuré en 11 sections à partir de toutes les données,  
 **Afin de** fournir un document complet et professionnel.
 
 **Points :** 8  
 **Critères d'acceptation :**
-- [ ] 10 sections : 1. Résumé exécutif, 2. Contexte & problème, 3. Solution proposée, 4. Analyse de marché, 5. Modèle économique, 6. Plan financier, 7. Plan de mise en œuvre, 8. Risques & mitigations, 9. Équipe & ressources, 10. Conclusion & recommandation
-- [ ] Chaque section : 150–300 mots minimum
+- [ ] 11 sections : 1. Résumé exécutif, 2. Présentation du projet, 3. Analyse du marché et du contexte, 4. Analyse concurrentielle, 5. Proposition de valeur, 6. Modèle économique, 7. Plan opérationnel, 8. Analyse des risques, 9. Hypothèses et scénarios financiers, 10. Impact stratégique et RSE, 11. Recommandation et prochaines étapes
+- [ ] Chaque section : 2 à 5 phrases rédigées
 - [ ] Aucun chiffre inventé : tous les montants proviennent des hypothèses saisies
-- [ ] Sortie Markdown structurée avec titres H2/H3
-- [ ] Tests : validation de structure (10 sections présentes) sur 3 projets
+- [ ] Sortie JSON structurée, mappée vers les titres affichés (`_SECTION_TITLES`)
+- [ ] Tests : validation de structure (11 sections présentes) sur 3 projets
 
 ---
 

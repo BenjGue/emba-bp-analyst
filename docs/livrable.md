@@ -168,7 +168,7 @@ Le démonstrateur **raconte une histoire utilisateur** :
 
 1. Le porteur **saisit** les informations clés (formulaire).
 2. L'outil **calcule** automatiquement le score.
-3. L'IA **génère** le business plan complet (10 sections).
+3. L'IA **génère** le business plan complet (11 sections).
 4. L'IA **propose** 3 scénarios (bas / médian / haut).
 5. L'IA **rédige** la note de synthèse CODIR.
 6. Le manager **télécharge / copie** la synthèse.
@@ -199,23 +199,24 @@ Catalogue versionné (`app/agents/prompts/`), un fichier par prompt, avec variab
 | Prompt | Rôle | Sortie |
 |---|---|---|
 | **Analyse de projet** | Identifie forces / faiblesses à partir des données saisies | JSON |
-| **Génération du business plan** | BP structuré en **10 sections** | JSON |
+| **Génération du business plan** | BP structuré en **11 sections** | JSON |
 | **Scénarios financiers** | 3 scénarios : bas, médian, haut | JSON |
 | **Note CODIR** | Synthèse 1 page pour le comité | Texte/JSON |
 | **Identification des risques** | Risques + criticité | JSON |
 | **Actions correctives** | Recommandations actionnables | JSON |
 
-### Les 10 sections du business plan
+### Les 11 sections du business plan
 1. Résumé exécutif
-2. Description du projet
-3. Analyse stratégique
-4. Analyse de marché
-5. Analyse concurrentielle
+2. Présentation du projet
+3. Analyse du marché et du contexte
+4. Analyse concurrentielle
+5. Proposition de valeur
 6. Modèle économique
-7. Hypothèses financières
-8. Scénarios
-9. Plan d'action
-10. Synthèse CODIR
+7. Plan opérationnel
+8. Analyse des risques
+9. Hypothèses et scénarios financiers
+10. Impact stratégique et RSE
+11. Recommandation et prochaines étapes
 
 ### Contraintes imposées à chaque prompt
 - Sortie **JSON structuré**.

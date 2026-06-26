@@ -7,8 +7,9 @@ info:
     de projets internes (La Poste). Permet le cycle de vie complet d'un projet :
     création, hypothèses financières (saisie manuelle ou import Excel),
     évaluation stratégique, scoring, génération du business plan et export
-    (Markdown / PDF). Une couche IA (Sonnet via Foundry) assiste la rédaction de
-    description et la proposition de notes stratégiques.
+    (Markdown / PDF). Une couche IA (modèle agnostique servi via Azure AI
+    Foundry, orchestration applicative) assiste la rédaction de description et la
+    proposition de notes stratégiques.
   contact:
     name: Équipe BizPlan-IA
   license:

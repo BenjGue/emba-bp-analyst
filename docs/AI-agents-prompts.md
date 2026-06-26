@@ -213,7 +213,7 @@ commenter) :
 
 ## 5. Agent Rédacteur — BIZ-17
 
-**Rôle.** Rédiger le contenu rédactionnel du business plan en **10 sections**
+**Rôle.** Rédiger le contenu rédactionnel du business plan en **11 sections**
 (2 à 5 phrases chacune), sans inventer de chiffre. Reçoit en contexte le score,
 les scénarios calculés et l'analyse stratégique de l'agent Analyste.
 
@@ -222,12 +222,14 @@ les scénarios calculés et l'analyse stratégique de l'agent Analyste.
 ```text
 <_CONTEXTE>
 Rôle : agent Rédacteur. Tu produis le contenu rédactionnel d'un business plan en
-10 sections. Réponds STRICTEMENT en JSON valide avec EXACTEMENT ces clés
+11 sections. Réponds STRICTEMENT en JSON valide avec EXACTEMENT ces clés
 (valeurs = texte rédigé, 2 à 5 phrases chacune) :
 {"resume_executif": "", "presentation_projet": "", "analyse_marche": "",
-"proposition_valeur": "", "modele_economique": "", "plan_operationnel": "",
-"analyse_risques": "", "hypotheses_financieres": "", "impact_strategique": "",
-"recommandation": ""}.
+"analyse_concurrentielle": "", "proposition_valeur": "", "modele_economique": "",
+"plan_operationnel": "", "analyse_risques": "", "hypotheses_financieres": "",
+"impact_strategique": "", "recommandation": ""}.
+La section 'analyse_concurrentielle' positionne le projet face aux alternatives
+internes et aux solutions concurrentes du marché.
 N'invente aucun chiffre. Aucun texte hors du JSON.
 ```
 
@@ -243,7 +245,7 @@ Analyse stratégique : <JSON AnalysteOutput>
 Scénarios financiers (calculés) : <JSON scenarios>
 ```
 
-- **Sortie** : `RedacteurOutput` (10 sections). Les clés sont mappées vers les
+- **Sortie** : `RedacteurOutput` (11 sections). Les clés sont mappées vers les
   titres affichés via `_SECTION_TITLES`.
 - **Mode** : `json_mode=True`.
 
@@ -252,6 +254,7 @@ Scénarios financiers (calculés) : <JSON scenarios>
 | `resume_executif` | Résumé exécutif |
 | `presentation_projet` | Présentation du projet |
 | `analyse_marche` | Analyse du marché et du contexte |
+| `analyse_concurrentielle` | Analyse concurrentielle |
 | `proposition_valeur` | Proposition de valeur |
 | `modele_economique` | Modèle économique |
 | `plan_operationnel` | Plan opérationnel |

@@ -69,7 +69,7 @@ $env:DATABASE_URL = "sqlite:///./bizplan.db"   # SQLite par défaut, aucune dép
   - `services/` — logique métier : `projects.py`, `financials.py`, `scoring.py`, `generation.py`, `export.py`, `imports.py`, et `services/ai/` (client httpx, agents, prompts, description assistée).
   - `schemas/` — modèles Pydantic (validation entrée/sortie).
   - `models/` — modèles SQLAlchemy.
-- **Multi-agents IA (EPIC 3)** : Orchestrateur + Analyste + Financier + Scoring (assiste seulement) + Rédacteur BP (10 sections) + Synthèse CODIR. Cible : Azure AI Foundry Agent Service ; **plan B** = orchestration applicative directe. Actuellement la génération est en **mode template** (mock déterministe) tant que `ai_enabled=False`.
+- **Multi-agents IA (EPIC 3)** : **6 agents IA** (Description, Évaluateur, Analyste, Financier, Rédacteur BP 11 sections, Synthèse CODIR), **orchestrés par le code** (`generation.py`, séquentiel). Il n'y a **pas** d'agent Scoring : le score est calculé par le code (`scoring.py`) ; l'Évaluateur *propose* seulement les 6 notes. La génération du BP enchaîne 4 agents (Analyste → Financier → Rédacteur → Synthèse). Inférence servie par **Azure AI Foundry** (`chat/completions`, modèle agnostique) ; repli **mode template** déterministe si `ai_enabled=False` ou en cas d'échec d'un agent.
 
 ### Endpoints principaux (`/projects`)
 | Méthode | Chemin | Rôle |
