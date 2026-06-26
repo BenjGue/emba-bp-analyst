@@ -58,3 +58,30 @@ def test_payback_repli_analytique_sans_delai_de_reference() -> None:
     )
     # median : 120000 / (80000 - 30000) * 12 = 28.8
     assert scenarios["median"]["retour_investissement_mois"] == 28.8
+
+
+def test_scenarios_exposent_bfr_et_tresorerie() -> None:
+    """Chaque scénario calcule un BFR estimé et une trésorerie de fin d'année (BIZ-89)."""
+    scenarios = _build_scenarios(
+        investissement=100000.0,
+        revenus=80000.0,
+        couts=30000.0,
+        delai_rentabilite_mois=36,
+    )
+    median = scenarios["median"]
+    # BFR médian : 80000 / 360 * 30 = 6666.67
+    assert median["bfr_estime"] == 6666.67
+    # Trésorerie fin d'année 1 : (80000 - 30000) - 100000 - 6666.67 = -56666.67
+    assert median["tresorerie_fin_annee"] == -56666.67
+
+
+def test_bfr_proportionnel_au_chiffre_d_affaires() -> None:
+    """Le BFR croît avec le chiffre d'affaires du scénario (BIZ-89)."""
+    scenarios = _build_scenarios(
+        investissement=100000.0,
+        revenus=80000.0,
+        couts=30000.0,
+        delai_rentabilite_mois=36,
+    )
+    assert scenarios["bas"]["bfr_estime"] < scenarios["median"]["bfr_estime"]
+    assert scenarios["median"]["bfr_estime"] < scenarios["haut"]["bfr_estime"]

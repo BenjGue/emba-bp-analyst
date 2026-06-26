@@ -287,3 +287,105 @@ class FinancialStatement(Base):
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     project: Mapped[Project] = relationship(back_populates="financial_statement")
+
+
+class RiskType(Base):
+    """Risque type du catalogue de référence (BIZ-88).
+
+    Catalogue partagé de risques que l'IA peut mobiliser pour analyser et
+    comparer les projets. Indépendant des projets (donnée de référence).
+
+    Attributes:
+        id: Identifiant technique.
+        code: Code stable et unique du risque.
+        libelle: Libellé lisible du risque.
+        categorie: Famille du risque (Technique, Financier, Réglementaire...).
+        description: Description du risque.
+        severite_defaut: Sévérité indicative par défaut (1 = faible, 5 = critique).
+    """
+
+    __tablename__ = "risk_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    libelle: Mapped[str] = mapped_column(String(150))
+    categorie: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(500))
+    severite_defaut: Mapped[int] = mapped_column()
+
+
+class OpportunityType(Base):
+    """Opportunité type du catalogue de référence (BIZ-88).
+
+    Catalogue partagé d'opportunités que l'IA peut mobiliser pour analyser et
+    comparer les projets. Indépendant des projets (donnée de référence).
+
+    Attributes:
+        id: Identifiant technique.
+        code: Code stable et unique de l'opportunité.
+        libelle: Libellé lisible de l'opportunité.
+        categorie: Famille de l'opportunité (Croissance, Efficacité, RSE...).
+        description: Description de l'opportunité.
+        impact_defaut: Impact indicatif par défaut (1 = faible, 5 = majeur).
+    """
+
+    __tablename__ = "opportunity_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    libelle: Mapped[str] = mapped_column(String(150))
+    categorie: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(500))
+    impact_defaut: Mapped[int] = mapped_column()
+
+
+class StrategicParameter(Base):
+    """Paramètre stratégique du catalogue de référence (BIZ-88).
+
+    Critère fin rattaché à l'une des six dimensions d'évaluation stratégique,
+    utilisé comme grille de lecture par l'IA pour comparer les projets.
+
+    Attributes:
+        id: Identifiant technique.
+        code: Code stable et unique du paramètre.
+        libelle: Libellé lisible du paramètre.
+        dimension: Dimension stratégique rattachée (rentabilite, alignement...).
+        description: Description du critère évalué.
+        poids: Importance relative du paramètre au sein de sa dimension (0-1).
+    """
+
+    __tablename__ = "strategic_parameters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    libelle: Mapped[str] = mapped_column(String(150))
+    dimension: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(500))
+    poids: Mapped[float] = mapped_column()
+
+
+class FinancialHypothesis(Base):
+    """Hypothèse financière type du catalogue de référence (BIZ-88).
+
+    Poste financier de référence (investissement, revenu, coût, délai,
+    financement) servant de base de modélisation et de comparaison des projets.
+
+    Attributes:
+        id: Identifiant technique.
+        code: Code stable et unique de l'hypothèse.
+        libelle: Libellé lisible de l'hypothèse.
+        categorie: Famille (investissement, revenu, cout, delai, financement).
+        unite: Unité de la valeur (EUR, EUR/an, mois, %, jours...).
+        valeur_defaut: Valeur indicative par défaut.
+        description: Description de l'hypothèse.
+    """
+
+    __tablename__ = "financial_hypotheses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    libelle: Mapped[str] = mapped_column(String(150))
+    categorie: Mapped[str] = mapped_column(String(50))
+    unite: Mapped[str] = mapped_column(String(20))
+    valeur_defaut: Mapped[float] = mapped_column()
+    description: Mapped[str] = mapped_column(String(500))

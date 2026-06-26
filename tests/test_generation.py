@@ -41,6 +41,16 @@ def test_generate_produit_un_business_plan(client: TestClient, project_id: int) 
     assert len(body["scenarios"]) == 3
 
 
+def test_generate_inclut_la_section_analyse_concurrentielle(
+    client: TestClient, project_id: int
+) -> None:
+    """Le business plan expose une section concurrentielle distincte (BIZ-90)."""
+    _prepare(client, project_id)
+    response = client.post(f"/projects/{project_id}/generate")
+    assert response.status_code == 201
+    assert "Analyse concurrentielle" in response.json()["sections"]
+
+
 def test_generate_est_idempotent(client: TestClient, project_id: int) -> None:
     _prepare(client, project_id)
     client.post(f"/projects/{project_id}/generate")
