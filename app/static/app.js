@@ -110,6 +110,61 @@ function el(html) {
   return t.content.firstElementChild;
 }
 
+// -------- Vue : page d'accueil --------
+async function renderHome() {
+  const token = beginRender();
+  // Affiche immédiatement la page d'accueil (contenu statique) ; les
+  // indicateurs du portefeuille sont chargés en arrière-plan et n'empêchent
+  // pas l'affichage si l'API est lente (cold start Azure) ou indisponible.
+  const tpl = document.getElementById("tpl-home").content.cloneNode(true);
+  view.innerHTML = "";
+  view.appendChild(tpl);
+
+  const statsEl = document.getElementById("home-stats");
+  if (!statsEl) return;
+  statsEl.innerHTML = '<div class="spinner"></div>';
+
+  let projects;
+  try {
+    projects = await api("GET", "");
+  } catch (_) {
+    if (isStaleRender(token)) return;
+    statsEl.innerHTML = "";
+    return;
+  }
+  if (isStaleRender(token)) return;
+
+  const total = projects.length;
+  const scored = projects.filter(
+    (p) => p.score_total !== null && p.score_total !== undefined,
+  );
+  const go = scored.filter((p) => p.score_total >= 70).length;
+  const cond = scored.filter(
+    (p) => p.score_total >= 40 && p.score_total < 70,
+  ).length;
+  const noGo = scored.filter((p) => p.score_total < 40).length;
+  const withBp = projects.filter((p) => p.has_business_plan).length;
+  const avg = scored.length
+    ? Math.round(
+        scored.reduce((s, p) => s + p.score_total, 0) / scored.length,
+      )
+    : null;
+
+  const stat = (value, label, cls = "") =>
+    `<div class="stat-card ${cls}">
+       <div class="stat-value">${value}</div>
+       <div class="stat-label">${label}</div>
+     </div>`;
+
+  statsEl.innerHTML =
+    stat(total, "Projet" + (total > 1 ? "s" : "")) +
+    stat(avg === null ? "—" : avg, "Score moyen / 100") +
+    stat(go, "Go", "stat-go") +
+    stat(cond, "Go conditionnel", "stat-cond") +
+    stat(noGo, "No-Go", "stat-nogo") +
+    stat(withBp, "Business plan" + (withBp > 1 ? "s" : "") + " généré" + (withBp > 1 ? "s" : ""));
+}
+
 // -------- Vue : tableau de bord --------
 async function renderDashboard(direction = "") {
   const token = beginRender();
@@ -1020,8 +1075,9 @@ document.addEventListener("click", (ev) => {
   const nav = ev.target.closest("[data-nav]");
   if (!nav) return;
   const dest = nav.dataset.nav;
-  if (dest === "dashboard") renderDashboard();
+  if (dest === "home") renderHome();
+  else if (dest === "dashboard") renderDashboard();
   else if (dest === "wizard") renderWizard();
 });
 
-renderDashboard();
+renderHome();

@@ -9,19 +9,69 @@
   </head>
   <body>
     <header class="app-header">
-      <div class="brand" role="button" tabindex="0" data-nav="dashboard">
+      <div class="brand" role="button" tabindex="0" data-nav="home">
         <span class="brand-mark">B</span>
         <div>
           <h1>BizPlan-IA</h1>
           <p>Évaluation de la pertinence des projets internes</p>
         </div>
       </div>
-      <button class="btn btn-primary" data-nav="wizard">+ Nouveau projet</button>
+      <nav class="app-nav" aria-label="Navigation principale">
+        <button class="btn btn-ghost" data-nav="dashboard">Tableau de bord</button>
+        <button class="btn btn-primary" data-nav="wizard">+ Nouveau projet</button>
+      </nav>
     </header>
 
     <main id="view" class="container" aria-live="polite"></main>
 
     <div id="toast" class="toast" hidden></div>
+
+    <template id="tpl-home">
+      <section class="home">
+        <div class="hero">
+          <div class="hero-text">
+            <p class="hero-eyebrow">Outil interne · La Poste Groupe</p>
+            <h2>Évaluez la pertinence de vos projets, du chiffrage au business plan.</h2>
+            <p class="hero-lead">
+              BizPlan-IA transforme une idée de projet en décision argumentée :
+              saisie ou import des hypothèses financières, notation
+              multi-dimensions, score Go / No-Go et génération automatique d'un
+              business plan exportable.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" data-nav="wizard">+ Créer un nouveau projet</button>
+              <button class="btn btn-ghost btn-lg" data-nav="dashboard">Accéder au tableau de bord</button>
+            </div>
+          </div>
+          <ul class="hero-steps" aria-label="Étapes du parcours">
+            <li><span class="hero-step-num">1</span> Décrivez le projet et sa direction</li>
+            <li><span class="hero-step-num">2</span> Renseignez ou importez les finances</li>
+            <li><span class="hero-step-num">3</span> Notez les dimensions stratégiques</li>
+            <li><span class="hero-step-num">4</span> Obtenez score et business plan</li>
+          </ul>
+        </div>
+
+        <div class="home-stats" id="home-stats" aria-label="Indicateurs du portefeuille"></div>
+
+        <div class="home-features">
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">🎯</span>
+            <h3>Score multi-dimensions</h3>
+            <p>Rentabilité, alignement stratégique, risque, impacts et faisabilité agrégés en un score sur 100.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">📊</span>
+            <h3>Finances structurées</h3>
+            <p>ROI, payback, BFR et trésorerie calculés depuis vos hypothèses, saisies ou importées d'Excel.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">🤖</span>
+            <h3>Business plan généré</h3>
+            <p>Un document complet rédigé par les agents IA, consultable et exportable en Markdown ou PDF.</p>
+          </article>
+        </div>
+      </section>
+    </template>
 
     <template id="tpl-dashboard">
       <section>

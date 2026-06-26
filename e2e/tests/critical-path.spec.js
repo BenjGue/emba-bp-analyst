@@ -87,6 +87,33 @@ test.describe("Parcours critique BizPlan-IA", () => {
     );
   });
 
+  test("accueil : page d'accueil par défaut puis accès au tableau de bord et au wizard", async ({
+    page,
+  }) => {
+    // Au chargement, l'application affiche la page d'accueil (BIZ-98) et non
+    // le tableau de bord : le hero et ses deux accès sont visibles.
+    await page.goto("/");
+    await expect(page.locator(".hero")).toBeVisible();
+    await expect(
+      page.locator('.hero-actions [data-nav="wizard"]'),
+    ).toBeVisible();
+    await expect(
+      page.locator('.hero-actions [data-nav="dashboard"]'),
+    ).toBeVisible();
+
+    // Le lien « Tableau de bord » mène bien au tableau de bord.
+    await page.locator('.app-nav [data-nav="dashboard"]').click();
+    await expect(
+      page.getByRole("heading", { name: "Tableau de bord" }),
+    ).toBeVisible();
+
+    // Retour à l'accueil via la marque, puis ouverture du wizard.
+    await page.locator('[data-nav="home"]').first().click();
+    await expect(page.locator(".hero")).toBeVisible();
+    await page.locator('.hero-actions [data-nav="wizard"]').click();
+    await expect(page.locator("#choice-manual")).toBeVisible();
+  });
+
   test("choix du mode : saisie manuelle masque l'import, import l'affiche", async ({
     page,
   }) => {
