@@ -74,6 +74,17 @@ test.describe("Parcours critique BizPlan-IA", () => {
     await expect(pdfLink).toBeVisible();
     const href = await pdfLink.getAttribute("href");
     expect(href).toContain("/export?format=pdf");
+
+    // 8. Retour au tableau de bord : la ligne du projet expose aussi un
+    //    telechargement PDF direct, sans ouvrir la fiche projet (BIZ-97).
+    await page.locator('[data-nav="dashboard"]').first().click();
+    const row = page.locator(`.project-row`, { hasText: nomProjet });
+    await expect(row).toBeVisible();
+    const rowPdf = row.locator(".row-pdf");
+    await expect(rowPdf).toBeVisible();
+    expect(await rowPdf.getAttribute("href")).toContain(
+      "/export?format=pdf",
+    );
   });
 
   test("choix du mode : saisie manuelle masque l'import, import l'affiche", async ({

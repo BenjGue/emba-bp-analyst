@@ -22,3 +22,18 @@ def test_static_sert_le_script(client: TestClient) -> None:
     response = client.get("/static/app.js")
     assert response.status_code == 200
     assert "renderDashboard" in response.text
+
+
+def test_dashboard_expose_le_telechargement_pdf(client: TestClient) -> None:
+    """Le tableau de bord propose un lien d'export PDF par projet (BIZ-97)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "row-pdf" in response.text
+    assert "/export?format=pdf" in response.text
+
+
+def test_dashboard_pdf_conditionne_au_business_plan(client: TestClient) -> None:
+    """Le bouton PDF du tableau de bord n'apparaît que si un BP existe (BIZ-97)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "p.has_business_plan" in response.text
