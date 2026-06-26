@@ -37,3 +37,31 @@ def test_dashboard_pdf_conditionne_au_business_plan(client: TestClient) -> None:
     response = client.get("/static/app.js")
     assert response.status_code == 200
     assert "p.has_business_plan" in response.text
+
+
+def test_accueil_presente_le_projet_et_les_acces(client: TestClient) -> None:
+    """La page d'accueil explique le projet et propose les deux accès (BIZ-98)."""
+    response = client.get("/")
+    assert response.status_code == 200
+    # Modèle de la page d'accueil et accès explicites.
+    assert 'id="tpl-home"' in response.text
+    assert 'data-nav="home"' in response.text
+    assert 'data-nav="dashboard"' in response.text
+    assert 'data-nav="wizard"' in response.text
+
+
+def test_accueil_est_la_vue_initiale(client: TestClient) -> None:
+    """Au chargement, l'application affiche l'accueil et non le tableau de bord (BIZ-98)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "function renderHome" in response.text
+    # La toute dernière vue invoquée au démarrage doit être l'accueil.
+    assert response.text.rstrip().endswith("renderHome();")
+
+
+def test_accueil_affiche_des_indicateurs(client: TestClient) -> None:
+    """La page d'accueil agrège des indicateurs du portefeuille (BIZ-98)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "home-stats" in response.text
+    assert "Score moyen" in response.text
