@@ -85,4 +85,3 @@ def test_bfr_proportionnel_au_chiffre_d_affaires() -> None:
     )
     assert scenarios["bas"]["bfr_estime"] < scenarios["median"]["bfr_estime"]
     assert scenarios["median"]["bfr_estime"] < scenarios["haut"]["bfr_estime"]
-
