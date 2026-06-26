@@ -135,7 +135,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 
 # 3. Configuration (optionnelle en local : SQLite par défaut, IA désactivée)
 #    Créer un fichier .env.local pour activer MySQL et/ou l'IA Azure AI Foundry :
-#      DATABASE_URL=mysql+pymysql://user:pwd@host/bizplan
+#      DATABASE_URL=mysql+pymysql://UTILISATEUR:MOT_DE_PASSE@HOTE/bizplan  # pragma: allowlist secret
 #      AI_ENABLED=true
 #      AI_ENDPOINT=...  AI_DEPLOYMENT=...  AI_API_KEY=...  (ou AI_USE_ENTRA_ID=true)
 
