@@ -12,6 +12,22 @@ def test_index_sert_la_page_html(client: TestClient) -> None:
     assert "BizPlan-IA" in response.text
 
 
+def test_index_estampille_les_assets_avec_une_version(client: TestClient) -> None:
+    """Les assets statiques portent une empreinte de version (cache-busting, BIZ-104)."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "__ASSET_VERSION__" not in response.text
+    assert "/static/app.js?v=" in response.text
+    assert "/static/style.css?v=" in response.text
+
+
+def test_index_demande_la_revalidation_du_html(client: TestClient) -> None:
+    """Le HTML est servi en no-cache pour récupérer les assets à jour (BIZ-104)."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "no-cache" in response.headers.get("cache-control", "")
+
+
 def test_static_sert_la_feuille_de_style(client: TestClient) -> None:
     response = client.get("/static/style.css")
     assert response.status_code == 200

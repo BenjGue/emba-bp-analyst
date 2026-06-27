@@ -6,12 +6,13 @@ OpenAPI auto-générée sur ``/docs``.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
@@ -20,6 +21,29 @@ from app.db import init_db, run_migrations
 from app.routers import health, projects, score
 
 _STATIC_DIR = Path(__file__).parent / "static"
+
+
+def _asset_version() -> str:
+    """Calcule une empreinte de version des assets statiques (BIZ-104).
+
+    Le hash agrège le contenu de ``app.js`` et ``style.css`` ; il change donc
+    dès qu'un de ces fichiers est modifié, ce qui permet de « buster » le cache
+    navigateur via une query string sur leurs URL.
+
+    Returns:
+        Une empreinte hexadécimale courte (12 caractères).
+    """
+    digest = hashlib.sha256()
+    for name in ("app.js", "style.css"):
+        path = _STATIC_DIR / name
+        if path.exists():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:12]
+
+
+#: Empreinte des assets calculée une fois au démarrage (les fichiers sont
+#: figés dans l'image conteneur, inutile de la recalculer à chaque requête).
+_ASSET_VERSION = _asset_version()
 
 
 @asynccontextmanager
@@ -70,9 +94,18 @@ def create_app() -> FastAPI:
     )
 
     @application.get("/", include_in_schema=False)
-    def index() -> FileResponse:
-        """Sert l'interface web (single-page application)."""
-        return FileResponse(_STATIC_DIR / "index.html")
+    def index() -> HTMLResponse:
+        """Sert l'interface web (single-page application).
+
+        Le HTML est servi en ``no-cache`` et les références aux assets
+        (``app.js`` / ``style.css``) sont estampillées d'une empreinte de
+        version (BIZ-104). Le navigateur revalide donc toujours la page et
+        récupère immédiatement les assets dès qu'ils changent, sans servir de
+        version obsolète depuis son cache.
+        """
+        html = (_STATIC_DIR / "index.html").read_text(encoding="utf-8")
+        html = html.replace("__ASSET_VERSION__", _ASSET_VERSION)
+        return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
     return application
 
