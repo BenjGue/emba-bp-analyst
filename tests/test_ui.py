@@ -103,3 +103,25 @@ def test_generation_desactive_le_bouton_pendant_le_traitement(
     assert response.status_code == 200
     assert "button.disabled = true" in response.text
     assert 'dataset.busy === "1"' in response.text
+
+
+def test_etape3_masque_les_notes_avant_analyse_ia(client: TestClient) -> None:
+    """À l'étape 3, les notes restent masquées tant que l'IA n'a pas répondu (BIZ-107)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    # Les notes sont regroupées dans un conteneur masqué par défaut...
+    assert '<div id="notes-wrap" hidden>' in response.text
+    # ...et révélé uniquement lorsque l'IA répond ou en repli manuel.
+    assert "if (notes) notes.hidden = false;" in response.text
+    # Le calcul du score reste impossible tant que les notes ne sont pas affichées.
+    assert 'id="next" disabled' in response.text
+
+
+def test_etape3_justification_conditionnee_aux_modifications(
+    client: TestClient,
+) -> None:
+    """Le champ de justification n'apparaît qu'en cas de modification d'une note (BIZ-107)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert 'id="justif-wrap" hidden=""' in response.text
+    assert "wrap.hidden = !isModified();" in response.text
