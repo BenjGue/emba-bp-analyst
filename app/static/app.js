@@ -765,6 +765,10 @@ function renderWizard() {
       })
       .catch(() => {
         if (isStaleRender(token)) return;
+        const notes = document.getElementById("notes-wrap");
+        if (notes) notes.hidden = false;
+        const nextBtn = document.getElementById("next");
+        if (nextBtn) nextBtn.disabled = false;
         const box = document.getElementById("ai-synthese-box");
         if (box) {
           box.className = "ai-synthese ai-synthese--off";
@@ -777,6 +781,10 @@ function renderWizard() {
 
   function applySuggestion(suggestion) {
     const justifs = suggestion.justifications || {};
+    const notes = document.getElementById("notes-wrap");
+    if (notes) notes.hidden = false;
+    const nextBtn = document.getElementById("next");
+    if (nextBtn) nextBtn.disabled = false;
     for (const [key] of DIMENSIONS) {
       const v = Number(suggestion.dimensions[key]);
       const input = document.getElementById(`d-${key}`);
@@ -817,17 +825,19 @@ function renderWizard() {
         <strong>✨ Évaluation par l'IA</strong>
         <p>⏳ L'IA évalue le projet à partir des informations saisies…</p>
       </div>
-      <p class="muted">L'IA propose ces notes ; ajustez-les si nécessaire (avec justification).</p>
-      ${sliders}
-      <label class="field" id="justif-wrap" hidden="">
-        Justification de vos modifications
-        <textarea id="f-justif" maxlength="2000"
-                  placeholder="Expliquez pourquoi vous modifiez les notes proposées par l'IA."></textarea>
-        <small class="field-error" id="err-justif" hidden></small>
-      </label>
+      <div id="notes-wrap" hidden>
+        <p class="muted">L'IA propose ces notes ; ajustez-les si nécessaire (avec justification).</p>
+        ${sliders}
+        <label class="field" id="justif-wrap" hidden="">
+          Justification de vos modifications
+          <textarea id="f-justif" maxlength="2000"
+                    placeholder="Expliquez pourquoi vous modifiez les notes proposées par l'IA."></textarea>
+          <small class="field-error" id="err-justif" hidden></small>
+        </label>
+      </div>
       <div class="btn-row">
         <button class="btn btn-ghost" id="prev">‹ Précédent</button>
-        <button class="btn btn-accent" id="next">Calculer le score ›</button>
+        <button class="btn btn-accent" id="next" disabled>Calculer le score ›</button>
       </div>`);
 
     // Affiche le champ de justification dès qu'une note diffère de la
