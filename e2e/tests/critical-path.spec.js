@@ -60,6 +60,8 @@ test.describe("Parcours critique BizPlan-IA", () => {
 
     // 6. Génération du business plan.
     await page.locator("#gen").click();
+    // Un indicateur de progression s'affiche pendant l'appel IA (BIZ-101).
+    await expect(page.locator(".gen-progress")).toBeVisible();
     await expect(page.getByText("Business plan généré")).toBeVisible();
 
     // 7. La fiche projet affiche le business plan et ses liens d'export.
