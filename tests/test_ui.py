@@ -65,3 +65,25 @@ def test_accueil_affiche_des_indicateurs(client: TestClient) -> None:
     assert response.status_code == 200
     assert "home-stats" in response.text
     assert "Score moyen" in response.text
+
+
+def test_generation_affiche_un_indicateur_de_progression(client: TestClient) -> None:
+    """La génération du business plan déclenche un overlay animé (BIZ-101)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "function runGeneration" in response.text
+    assert "gen-progress" in response.text
+    # Indicateur accessible et étapes décrites pour rassurer l'utilisateur.
+    assert 'role="status"' in response.text
+    assert "GENERATION_STEPS" in response.text
+
+
+def test_generation_desactive_le_bouton_pendant_le_traitement(
+    client: TestClient,
+) -> None:
+    """Le bouton de génération est désactivé pendant l'appel pour éviter les
+    doubles soumissions (BIZ-101)."""
+    response = client.get("/static/app.js")
+    assert response.status_code == 200
+    assert "button.disabled = true" in response.text
+    assert 'dataset.busy === "1"' in response.text

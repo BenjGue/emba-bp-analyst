@@ -260,6 +260,71 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// -------- Génération du business plan (avec indicateur de progression) ------
+// Étapes affichées pendant la génération. L'appel IA étant synchrone et long
+// (plusieurs dizaines de secondes), on fait défiler des messages pour montrer
+// que le traitement avance, à défaut d'une progression réelle côté serveur.
+const GENERATION_STEPS = [
+  "Analyse du projet et des hypothèses financières…",
+  "Étude de marché et analyse concurrentielle…",
+  "Construction du modèle économique…",
+  "Évaluation des risques…",
+  "Rédaction des 11 sections du business plan…",
+  "Synthèse à destination du CODIR…",
+  "Finalisation du document…",
+];
+
+// Lance la génération du business plan d'un projet en affichant un overlay
+// animé (BIZ-101). Le bouton déclencheur est désactivé pour empêcher les
+// doubles soumissions. En cas de succès, redirige vers la fiche projet ; en
+// cas d'erreur, retire l'overlay, réactive le bouton et notifie l'utilisateur.
+async function runGeneration(projectId, button) {
+  // Anti double-clic : une génération est déjà en cours pour ce bouton.
+  if (button && button.dataset.busy === "1") return;
+  if (button) {
+    button.dataset.busy = "1";
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+  }
+
+  const overlay = el(`
+    <div class="gen-progress" role="status" aria-live="polite">
+      <div class="gen-progress-card">
+        <div class="gen-spinner" aria-hidden="true"></div>
+        <p class="gen-step">${GENERATION_STEPS[0]}</p>
+        <p class="gen-hint">Génération par les agents IA — cela peut prendre jusqu'à une minute.</p>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+
+  const stepEl = overlay.querySelector(".gen-step");
+  let i = 0;
+  const timer = setInterval(() => {
+    i = Math.min(i + 1, GENERATION_STEPS.length - 1);
+    stepEl.textContent = GENERATION_STEPS[i];
+  }, 4000);
+
+  const cleanup = () => {
+    clearInterval(timer);
+    overlay.remove();
+  };
+
+  try {
+    await api("POST", `/${projectId}/generate`);
+    cleanup();
+    toast("Business plan généré");
+    renderDetail(projectId);
+  } catch (e) {
+    cleanup();
+    if (button) {
+      button.disabled = false;
+      button.dataset.busy = "0";
+      button.removeAttribute("aria-busy");
+    }
+    toast(e.message, true);
+  }
+}
+
 // Libellés d'affichage des postes du tableau financier détaillé (BIZ-32).
 const STATEMENT_LABELS = {
   salaires: "Salaires",
@@ -828,15 +893,8 @@ function renderWizard() {
 
     document.getElementById("see").onclick = () =>
       renderDetail(state.project.id);
-    document.getElementById("gen").onclick = async () => {
-      try {
-        await api("POST", `/${state.project.id}/generate`);
-        toast("Business plan généré");
-        renderDetail(state.project.id);
-      } catch (e) {
-        toast(e.message, true);
-      }
-    };
+    const genBtn = document.getElementById("gen");
+    genBtn.onclick = () => runGeneration(state.project.id, genBtn);
   }
 
   stepChoice();
@@ -944,15 +1002,7 @@ async function renderDetail(projectId) {
 
   const gen = document.getElementById("gen");
   if (gen) {
-    gen.onclick = async () => {
-      try {
-        await api("POST", `/${projectId}/generate`);
-        toast("Business plan généré");
-        renderDetail(projectId);
-      } catch (e) {
-        toast(e.message, true);
-      }
-    };
+    gen.onclick = () => runGeneration(projectId, gen);
   }
   wireBpToc();
 }
